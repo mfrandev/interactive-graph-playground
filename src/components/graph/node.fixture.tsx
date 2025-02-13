@@ -22,7 +22,7 @@ const Node = (
         id?: NodeID | undefined, 
         cx?: number | undefined, 
         cy?: number | undefined, 
-        onMouseDown?: React.MouseEventHandler<SVGCircleElement> | undefined
+        onMouseDown?: React.MouseEventHandler<SVGGElement> | undefined
     }) => {
 
     // Calculate the centerpoint of the circle
@@ -33,13 +33,12 @@ const Node = (
             <g
             className = { id !== undefined ? `hover:cursor-move` : '' }
             dominantBaseline='middle'
-            
+            onMouseDown={(e: React.MouseEvent<SVGGElement, MouseEvent>) => {
+                if(onMouseDown === undefined) return;
+                onMouseDown(e);
+            }}
             >
                 <circle 
-                onMouseDown={(e: React.MouseEvent<SVGCircleElement, MouseEvent>) => {
-                    if(onMouseDown === undefined) return;
-                    onMouseDown(e);
-                }}
                 cx = { cx !== undefined ? cx : circleCenter } 
                 cy = { cy !== undefined ? cy : circleCenter } 
                 r={circleCenter - (styleInfo.strokeWidth / 2)} 

@@ -31,9 +31,9 @@ export const DOMToSVG = (xDOM: number, yDOM: number, svg: SVGSVGElement) => {
     }
 }
 
-export const SVGFromGAndSVG = (circle: SVGCircleElement, svg: SVGSVGElement, x: number, y: number) => {
+export const SVGFromGAndSVG = (g: SVGGElement, svg: SVGSVGElement, x: number, y: number) => {
     // Get the current transformation matrix of the <g> element
-    const gMatrix = circle.getScreenCTM();
+    const gMatrix = g.getScreenCTM();
 
     // Create an SVG point for the mouse position
     const point = svg.createSVGPoint();

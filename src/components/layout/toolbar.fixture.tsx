@@ -81,7 +81,17 @@ const Toolbar = () => {
                 adjacencyList: useGraphStore.getState().adjacencyList,
                 graphComponents: {
                     nodes: graphComponents.nodes,
-                    edges: [...graphComponents.edges, {id: id, to: 0, from: 0, cost: 0}]
+                    edges: [...graphComponents.edges, {
+                        id: id, 
+                        to: 0, 
+                        from: 0, 
+                        cost: 0,
+                        type:componentType,
+                        x1: 450,
+                        x2: 550,
+                        y1: 550,
+                        y2: 450
+                    }]
                 }
             }
         );
