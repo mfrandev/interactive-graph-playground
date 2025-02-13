@@ -6,11 +6,15 @@
  * Takea a set of DOM coordinates, recieved on-click and converts them into SVG coordinates.
  */
 
-export const DOMToSVGOnClick = (event: React.MouseEvent<SVGSVGElement, MouseEvent>) => {
+export const DOMToSVGOnClick = (
+    event: React.MouseEvent<SVGSVGElement, MouseEvent>, 
+    svgCTM: DOMMatrix | null, 
+    inverseSVGCTM: DOMMatrix | null) => {
     const svg = event.currentTarget;
-    const ctm = svg.getScreenCTM();
+    if(!svgCTM) console.log("Error: SVG CTM not cached");
+    const ctm = svgCTM ? svgCTM : svg.getScreenCTM();
     if (ctm) {
-        const inverseCTM = ctm.inverse();
+        const inverseCTM = inverseSVGCTM ? inverseSVGCTM : ctm.inverse();
         const point = svg.createSVGPoint();
         point.x = event.clientX;
         point.y = event.clientY;

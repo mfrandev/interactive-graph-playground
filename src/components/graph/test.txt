@@ -1,0 +1,3 @@
+Connecting nodes and edges
+
+1. Highlights have radial sockets 

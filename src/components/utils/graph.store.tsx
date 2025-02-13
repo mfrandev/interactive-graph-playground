@@ -20,7 +20,7 @@ import { create } from 'zustand';
 interface GraphStore {
     graphComponents: GraphComponents,
     adjacencyList: AdjacencyList,
-    connectedComponents?: ConnectedComponents // TODO (If useful) 
+    connectedComponents?: ConnectedComponents, // TODO (If useful) 
 };
 
 export const useGraphStore = create<GraphStore>(() => ({

@@ -64,6 +64,7 @@ import { styleInfo, triangleStyleInfo } from '../utils/edge';
                     fill="black" 
                 />
             }
+            
 
             {/* Display the edge cost in-line, if defined */}
             { cost && <circle cx={circleCenter} cy={circleCenter} r={circleCenter/2.5}
@@ -75,6 +76,7 @@ import { styleInfo, triangleStyleInfo } from '../utils/edge';
                     textAnchor="middle"
                     dominantBaseline="middle"
                     style={{ fontSize: `${styleInfo.fontSize}em`, fill: 'black' }}
+                    className="select-none"
                 >
                     {cost}
                 </text> }

@@ -10,7 +10,7 @@
 
 import '../../index.css';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 import { useGraphStore } from '../utils/graph.store';
 import { DOMToSVGOnClick, SVGFromGAndSVG } from '../utils/dom-utils'; 
@@ -38,6 +38,29 @@ const Canvas = () => {
     const [ [ xDragOffsetNode, yDragOffsetNode ], setDragOffsetNode ] = useState<[number, number]>([0, 0]);
     const [ [ x1DragOffsetEdge, x2DragOffsetEdge, y1DragOffsetEdge, y2DragOffsetEdge ], setDragOffsetEdge ] = useState<[number, number, number, number]>([0, 0, 0, 0]);
 
+    const [ svgCTM, setSVGCTM ] = useState<DOMMatrix | null>(null);
+    const [ inverseSVGCTM, setInverseSVGCTM ] = useState<DOMMatrix | null>(null);
+
+    const cacheCanvasCTM = () => {
+        if(!svgRef.current) return;
+        const ctm = svgRef.current.getScreenCTM();
+        if(ctm === null) return;
+        setSVGCTM(ctm);
+        console.log("Cached canvas CTM");
+    };
+
+    useEffect(() => {
+        if(!svgCTM) return;
+        setInverseSVGCTM(svgCTM.inverse());
+    }, [svgCTM]);
+
+    useEffect(() => {
+        cacheCanvasCTM();
+        window.addEventListener('resize', cacheCanvasCTM);
+        return () => {
+            window.removeEventListener('resize', cacheCanvasCTM);
+        }
+    }, []);
 
     const updateNodePosition = (
         id: NodeID | undefined,
@@ -113,7 +136,6 @@ const Canvas = () => {
         setIsDraggingNode([true, id]);
         setDragOffsetNode([0, 0]);
         nodeRef.current = e.currentTarget;
-
         const circleRef = nodeRef.current.querySelector('circle');
         if(circleRef === null) {
             dragAndDropFailureCleanup();
@@ -138,6 +160,9 @@ const Canvas = () => {
         setDragOffsetNode([dragOffsetX, dragOffsetY]);
     }
 
+    const throttleDelay = 16; // ~60 FPS (16ms per frame)
+    const [lastEventTime, setLastEventTime] = useState(0);
+
     /**
      * Handle case when user moves a node
      * @param e 
@@ -145,13 +170,21 @@ const Canvas = () => {
      */
     const handleOnMouseMoveNode = (e: React.MouseEvent<SVGSVGElement, MouseEvent>) => {
         if(!isDraggingNode || nodeRef.current === null) return;
-        const result = DOMToSVGOnClick(e);
+
+        const now = performance.now();
+        if (now - lastEventTime < throttleDelay) {
+            return;
+        }
+        setLastEventTime(now);
+        const result = DOMToSVGOnClick(e, svgCTM, inverseSVGCTM);
         if(!result) {
             dragAndDropFailureCleanup();
             return;
         }
         const [x, y] = result;
         updateNodePosition(nodeID, x - xDragOffsetNode, y - yDragOffsetNode);
+        // nodeRef.current.querySelector('circle')?.setAttribute('cx', `${x - xDragOffsetNode}`);
+        // nodeRef.current.querySelector('circle')?.setAttribute('cy', `${y - yDragOffsetNode}`);
 
     }
 
@@ -162,7 +195,7 @@ const Canvas = () => {
      */
     const handleOnMouseUpNode = (e: React.MouseEvent<SVGSVGElement>) => {
         if(!isDraggingNode) return;
-        const result = DOMToSVGOnClick(e);
+        const result = DOMToSVGOnClick(e, svgCTM, inverseSVGCTM);
         if(!result) {
             dragAndDropFailureCleanup();
             return;
@@ -175,7 +208,7 @@ const Canvas = () => {
     }
 
     /**
-     * Handle cse when user clicks on an edge
+     * Handle case when user clicks on an edge
      * @param e
      * @param id 
      * @returns 
@@ -224,7 +257,14 @@ const Canvas = () => {
      */
     const handleOnMouseMoveEdge = (e: React.MouseEvent<SVGSVGElement, MouseEvent>) => {
         if(!isDraggingEdge || edgeRef.current === null) return;
-        const result = DOMToSVGOnClick(e);
+
+        const now = performance.now();
+        if (now - lastEventTime < throttleDelay) {
+            return;
+        }
+        setLastEventTime(now);
+
+        const result = DOMToSVGOnClick(e, svgCTM, inverseSVGCTM);
         if(!result) {
             dragAndDropFailureCleanup();
             return;
@@ -246,7 +286,7 @@ const Canvas = () => {
      */
     const handleOnMouseUpEdge = (e: React.MouseEvent<SVGSVGElement>) => {
         if(!isDraggingEdge) return;
-        const result = DOMToSVGOnClick(e);
+        const result = DOMToSVGOnClick(e, svgCTM, inverseSVGCTM);
         if(!result) {
             dragAndDropFailureCleanup();
             return;
@@ -277,6 +317,7 @@ const Canvas = () => {
                 viewBox = "0 0 1000 1000"
                 xmlns="http://www.w3.org/2000/svg"
                 fill="transparent"
+
                 onMouseMove={(e) => {
                     if(isDraggingNode) handleOnMouseMoveNode(e);
                     if(isDraggingEdge) handleOnMouseMoveEdge(e);
