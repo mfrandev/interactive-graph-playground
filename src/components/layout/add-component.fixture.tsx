@@ -30,10 +30,7 @@ const AddComponentButton = ({ onClickFunction, componentType = ComponentType.BID
                     xmlns="http://www.w3.org/2000/svg"
                     viewBox='0 0 100 100'
                     >
-                        <Node 
-                            cx={undefined} 
-                            cy={undefined} 
-                        />
+                        <Node/>
                     </svg>
                 </div>
             }

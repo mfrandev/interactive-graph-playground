@@ -20,5 +20,6 @@ export const styleInfo = {
     strokeWidth: 3,
     fill: "transparent",
     stroke: "black",
-    fontSize: 3
+    fontSize: 3,
+    // highlight: 'outline-blue-400/80 outline-dashed'
 };

@@ -27,12 +27,12 @@ const Canvas = () => {
     const graphComponents = useGraphStore(state => state.graphComponents);
 
     /**
-     * TODO: Optimize drag and drop feature using caching and/or bounding boxes
      * Drag and drop state
      */
     const svgRef = useRef<SVGSVGElement>(null);
     const nodeRef = useRef<SVGGElement>(null);
     const edgeRef = useRef<SVGGElement>(null);
+
     const [ [ isDraggingNode, nodeID ], setIsDraggingNode ] = useState<[boolean, NodeID | undefined]>([false, undefined]);
     const [ [ isDraggingEdge, edgeID ], setIsDraggingEdge ] = useState<[boolean, NodeID | undefined]>([false, undefined]);
     const [ [ xDragOffsetNode, yDragOffsetNode ], setDragOffsetNode ] = useState<[number, number]>([0, 0]);
