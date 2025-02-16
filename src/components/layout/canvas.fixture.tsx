@@ -19,12 +19,15 @@ import { NodeID } from '../utils/node';
 import Edge from '../graph/edge.fixture';
 import { EdgeID } from '../utils/edge';
 
+import { CollisionManager } from './canvas.collision-manager';
+
 export const CANVASID = 'CanvasSVG';
 
 const Canvas = () => {
 
     // Maintain graph state
     const graphComponents = useGraphStore(state => state.graphComponents);
+    const collisionManager: CollisionManager = new CollisionManager();
 
     /**
      * Drag and drop state
@@ -48,6 +51,11 @@ const Canvas = () => {
         setSVGCTM(ctm);
         console.log("Cached canvas CTM");
     };
+    
+    const resizeEventHandler = () => {
+        cacheCanvasCTM();
+        // Space reserved for future updates
+    }
 
     useEffect(() => {
         if(!svgCTM) return;
@@ -55,10 +63,11 @@ const Canvas = () => {
     }, [svgCTM]);
 
     useEffect(() => {
-        cacheCanvasCTM();
-        window.addEventListener('resize', cacheCanvasCTM);
+        resizeEventHandler();
+        // Update the canvas collision manager here
+        window.addEventListener('resize', resizeEventHandler);
         return () => {
-            window.removeEventListener('resize', cacheCanvasCTM);
+            window.removeEventListener('resize', resizeEventHandler);
         }
     }, []);
 
@@ -68,12 +77,26 @@ const Canvas = () => {
         useGraphStore.setState((state) => {
             const newNodes = state.graphComponents.nodes.map((node) => {
                 if (node.id !== id) return node;
-                return { ...node, cx: cx, cy: cy };
+                return { ...node, cx: cx, cy: cy, gridCells: collisionManager.getCellsInCircle(cx, cy) };
             });
 
             if (newNodes === state.graphComponents.nodes) {
                 return state; // No change, prevent re-render
             }
+
+            const temp = collisionManager.getCellsInCircle(cx, cy);
+            graphComponents.edges.forEach((edge) => {   
+                const collisionCandidates: Set<string> = collisionManager.findCollisionCandidates(edge.gridCells, temp);
+                if(collisionCandidates.size > 0) {
+                    collisionCandidates.forEach((cell) => {
+                        const isCollision: boolean = collisionManager.findCollisionsBetweenEdgeAndNodeTemp(
+                            edge.x1, edge.x2, edge.y1, edge.y2, cx, cy
+                        );
+                        if(isCollision)
+                            console.log(`Node ${id} and Edge ${edge.id} collided in cell ${cell}`);
+                    });
+                }
+            });
 
             return {
                 ...state,
@@ -93,12 +116,31 @@ const Canvas = () => {
         useGraphStore.setState((state) => {
             const newEdges = state.graphComponents.edges.map((edge) => {
                 if (edge.id !== id) return edge;
-                return { ...edge, x1: x1, x2: x2, y1: y1, y2: y2 };
+                return { ...edge, x1: x1, x2: x2, y1: y1, y2: y2, gridCells: collisionManager.getCellsAtVertices(x1, x2, y1, y2) };
             });
 
             if (newEdges === state.graphComponents.edges) {
                 return state; // No change, prevent re-render
             }
+
+            const temp = collisionManager.getCellsAtVertices(x1, x2, y1, y2);
+            graphComponents.nodes.forEach((node) => {
+                const collisionCandidates: Set<string> = collisionManager.findCollisionCandidates(node.gridCells, temp);
+                if(collisionCandidates.size > 0) {
+                    collisionCandidates.forEach((cell) => {
+                        /**
+                         * TODO: Fix this implementation when improved drag n drop snap-to-node is implemented. 
+                         * Known issue: One edge can simultaneously collide with multiple nodes at the same point.
+                         * This should be resolved once snap-to-node is implemented, this is a temporary solution for testing.
+                         */
+                        const isCollision: boolean = collisionManager.findCollisionsBetweenEdgeAndNodeTemp(
+                            x1, x2, y1, y2, node.cx, node.cy
+                        );
+                        if(isCollision)
+                            console.log(`Node ${node.id} and Edge ${id} collided in cell ${cell}`);
+                    });
+                }
+            });
 
             return {
                 ...state,

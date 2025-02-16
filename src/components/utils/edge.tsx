@@ -20,7 +20,8 @@ export default interface EdgeIF {
     x1: number,
     x2: number,
     y1: number,
-    y2: number
+    y2: number,
+    gridCells: Set<string>;
 }
 
 // Styling for the center circle allowing visible edge cost

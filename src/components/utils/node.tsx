@@ -11,7 +11,8 @@ export type NodeID = number;
 export interface NodeIF {
     id: NodeID,
     cx: number, 
-    cy: number
+    cy: number,
+    gridCells: Set<string>;
 }
 
 // Styling for easily adjustable node sizes
@@ -21,5 +22,6 @@ export const styleInfo = {
     fill: "transparent",
     stroke: "black",
     fontSize: 3,
-    // highlight: 'outline-blue-400/80 outline-dashed'
+    circleCenter: 50, // viewBoxSide / 2
+    radius: 48.5    // circleCenter - (strokeWidth / 2)
 };

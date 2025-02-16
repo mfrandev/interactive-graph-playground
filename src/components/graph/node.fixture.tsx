@@ -27,9 +27,6 @@ const Node = (
         onMouseDown?: React.MouseEventHandler<SVGGElement> | undefined
     }) => {
 
-    // Calculate the centerpoint of the circle
-    const circleCenter = styleInfo.viewBoxSide / 2;
-
     // Return a programmatically proportioned, in-line SVG node component
     return (
             <g
@@ -41,16 +38,16 @@ const Node = (
             }}
             >
                 <circle 
-                cx = { cx !== undefined ? cx : circleCenter } 
-                cy = { cy !== undefined ? cy : circleCenter } 
-                r={circleCenter - (styleInfo.strokeWidth / 2)} 
+                cx = { cx !== undefined ? cx : styleInfo.circleCenter } 
+                cy = { cy !== undefined ? cy : styleInfo.circleCenter } 
+                r={styleInfo.radius} 
                 stroke-width={styleInfo.strokeWidth} 
                 fill={styleInfo.fill} 
                 stroke={styleInfo.stroke}
                 />
                 <text
-                    x={ cx !== undefined ? cx : circleCenter }
-                    y={ (cy !== undefined ? cy : circleCenter) + styleInfo.fontSize * 1.5}
+                    x={ cx !== undefined ? cx : styleInfo.circleCenter }
+                    y={ (cy !== undefined ? cy : styleInfo.circleCenter) + styleInfo.fontSize * 1.5}
                     textAnchor="middle"
                     dominantBaseline="middle"
                     font-size = {`${styleInfo.fontSize}em`}

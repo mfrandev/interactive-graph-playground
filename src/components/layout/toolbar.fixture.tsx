@@ -17,12 +17,15 @@ import { EdgeID } from '../utils/edge';
 import { ComponentType, isEdge } from '../utils/graph.interfaces';
 import { DOMToSVG } from '../utils/dom-utils';
 
+import { CollisionManager } from '../layout/canvas.collision-manager';
 
 import AddComponentButton from './add-component.fixture';
 import { CANVASID } from './canvas.fixture';
 
 let node: NodeID = 0;
 let edge: EdgeID = 0;
+
+const collisionManager = new CollisionManager();
 
 const Toolbar = () => {
     const graphComponents = useGraphStore(state => state.graphComponents);
@@ -53,14 +56,17 @@ const Toolbar = () => {
      */
     const addNode = (id: NodeID) => {
         if(graphComponents.nodes.length >= 20) return;
+        const cx = center[0] ? center[0] : 500;
+        const cy = center[1] ? center[1] : 500;
         useGraphStore.setState(
             {
                 adjacencyList: useGraphStore.getState().adjacencyList,
                 graphComponents: {
                     nodes: [...graphComponents.nodes, {
                         id: id, 
-                        cx: !center[0] ? 500 : center[0], 
-                        cy: !center[1] ? 500 : center[1],
+                        cx: cx, 
+                        cy: cy,
+                        gridCells: collisionManager.getCellsInCircle(cx, cy)
                     }],
                     edges: graphComponents.edges
                 }
@@ -76,6 +82,10 @@ const Toolbar = () => {
      */
     const addEdge = (id: EdgeID, componentType: ComponentType) => {
         if(!isEdge(componentType)) return; //TODO error handle, but this should never fire
+        const x1 = center[0] ? center[0] - 50 : 450;
+        const x2 = center[0] ? center[0] + 50 : 550;
+        const y1 = center[0] ? center[0] + 50 : 550;
+        const y2 = center[0] ? center[0] - 50 : 450;
         useGraphStore.setState(
             {
                 adjacencyList: useGraphStore.getState().adjacencyList,
@@ -87,10 +97,11 @@ const Toolbar = () => {
                         from: 0, 
                         cost: 0,
                         type:componentType,
-                        x1: 450,
-                        x2: 550,
-                        y1: 550,
-                        y2: 450
+                        x1: x1,
+                        x2: x2,
+                        y1: y1,
+                        y2: y2,
+                        gridCells: collisionManager.getCellsAtVertices(x1, x2, y1, y2)
                     }]
                 }
             }
