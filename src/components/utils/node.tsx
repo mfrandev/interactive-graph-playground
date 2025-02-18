@@ -5,14 +5,16 @@
  * DESCRIPTION: Define/Export the NodeID type.
  */
 
+import { EdgeID } from './edge';
+
 
 export type NodeID = number;
 
 export interface NodeIF {
-    id: NodeID,
     cx: number, 
     cy: number,
     gridCells: Set<string>;
+    connectedEdges: Set<EdgeID>
 }
 
 // Styling for easily adjustable node sizes

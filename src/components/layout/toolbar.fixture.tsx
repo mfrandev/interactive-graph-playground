@@ -11,13 +11,11 @@ import { useState, useEffect } from 'react';
 
 import '../../index.css';
 
-import { useGraphStore } from '../utils/graph.store';
+import { useGraphStore, useCollisionManager } from '../utils/graph.store';
 import { NodeID } from '../utils/node';
 import { EdgeID } from '../utils/edge';
 import { ComponentType, isEdge } from '../utils/graph.interfaces';
 import { DOMToSVG } from '../utils/dom-utils';
-
-import { CollisionManager } from '../layout/canvas.collision-manager';
 
 import AddComponentButton from './add-component.fixture';
 import { CANVASID } from './canvas.fixture';
@@ -25,10 +23,9 @@ import { CANVASID } from './canvas.fixture';
 let node: NodeID = 0;
 let edge: EdgeID = 0;
 
-const collisionManager = new CollisionManager();
-
 const Toolbar = () => {
     const graphComponents = useGraphStore(state => state.graphComponents);
+    let collisionManager = useCollisionManager(state => state);
 
     const [ center, setCenterXYSVG ] = useState([0, 0]);
 
@@ -55,19 +52,30 @@ const Toolbar = () => {
      * @returns void
      */
     const addNode = (id: NodeID) => {
-        if(graphComponents.nodes.length >= 20) return;
+        if(graphComponents.nodes.size >= 20) return;
         const cx = center[0] ? center[0] : 500;
         const cy = center[1] ? center[1] : 500;
+        collisionManager = useCollisionManager.getState();
+        const gridCells = collisionManager.getCellsInCircle(cx, cy);
+        collisionManager.addToNodeGrid(gridCells, id);
+        useCollisionManager.setState(collisionManager);
         useGraphStore.setState(
             {
                 adjacencyList: useGraphStore.getState().adjacencyList,
                 graphComponents: {
-                    nodes: [...graphComponents.nodes, {
-                        id: id, 
-                        cx: cx, 
-                        cy: cy,
-                        gridCells: collisionManager.getCellsInCircle(cx, cy)
-                    }],
+                    nodes: new Map(
+                        [
+                            ...graphComponents.nodes, 
+                            [ id,
+                                {
+                                    cx: cx, 
+                                    cy: cy,
+                                    gridCells: gridCells,
+                                    connectedEdges: new Set<EdgeID>()
+                                }
+                            ]
+                        ]
+                    ),
                     edges: graphComponents.edges
                 }
             }
@@ -86,23 +94,36 @@ const Toolbar = () => {
         const x2 = center[0] ? center[0] + 50 : 550;
         const y1 = center[0] ? center[0] + 50 : 550;
         const y2 = center[0] ? center[0] - 50 : 450;
+        collisionManager = useCollisionManager.getState();
+        const firstCell = collisionManager.getCellWithSVGCoords(x1, y1);
+        const secondCell = collisionManager.getCellWithSVGCoords(x2, y2);
+        collisionManager.addVertexToEdgeGrid(firstCell, id);
+        collisionManager.addVertexToEdgeGrid(secondCell, id);
+        useCollisionManager.setState(collisionManager);
         useGraphStore.setState(
             {
                 adjacencyList: useGraphStore.getState().adjacencyList,
                 graphComponents: {
                     nodes: graphComponents.nodes,
-                    edges: [...graphComponents.edges, {
-                        id: id, 
-                        to: 0, 
-                        from: 0, 
-                        cost: 0,
-                        type:componentType,
-                        x1: x1,
-                        x2: x2,
-                        y1: y1,
-                        y2: y2,
-                        gridCells: collisionManager.getCellsAtVertices(x1, x2, y1, y2)
-                    }]
+                    edges: new Map(
+                        [
+                            ...graphComponents.edges, 
+                            [ id, 
+                                {
+                                    to: -1, 
+                                    from: -1, 
+                                    cost: 0,
+                                    type:componentType,
+                                    x1: x1,
+                                    x2: x2,
+                                    y1: y1,
+                                    y2: y2,
+                                    x1y1GridCell:firstCell,
+                                    x2y2GridCell: secondCell
+                                }
+                            ]
+                        ]
+                    )
                 }
             }
         );

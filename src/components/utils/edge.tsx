@@ -7,21 +7,23 @@
  * 2/12/2025: Added 'type' to EdgeIF to allow for edge type differentiation.
  */
 
-export type EdgeID = number;
 import { ComponentType } from './graph.interfaces';
+import { NodeID } from './node';
+
+export type EdgeID = number;
 
 // Isolated edges with assigned cost is valid case
-export default interface EdgeIF {
-    id: EdgeID,
-    to: number | undefined,
-    from: number | undefined,
+export interface EdgeIF {
+    to: NodeID | undefined,
+    from: NodeID | undefined,
     cost: number | undefined,
     type: ComponentType, // Uni or Bi direction edge
     x1: number,
     x2: number,
     y1: number,
     y2: number,
-    gridCells: Set<string>;
+    x1y1GridCell: string, 
+    x2y2GridCell: string
 }
 
 // Styling for the center circle allowing visible edge cost

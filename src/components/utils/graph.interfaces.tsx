@@ -7,16 +7,14 @@
 */
 
 import { NodeID, NodeIF } from './node';
-import EdgeIF from './edge';
+import { EdgeID, EdgeIF } from './edge';
 
 export interface GraphComponents {
-    nodes: NodeIF[],
-    edges: EdgeIF[]
+    nodes: Map<NodeID, NodeIF>,
+    edges: Map<EdgeID, EdgeIF>
 }
 
-export interface AdjacencyList {
-    [key: NodeID]: Set<EdgeIF>
-}
+export type AdjacencyList = Map<NodeID, Set<EdgeID>>;
 
 export interface ConnectedComponents {
     [nodes: NodeID]: [NodeID | undefined]
