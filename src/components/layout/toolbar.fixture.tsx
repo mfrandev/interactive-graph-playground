@@ -11,7 +11,7 @@ import { useState, useEffect } from 'react';
 
 import '../../index.css';
 
-import { useGraphStore, useCollisionManager } from '../utils/graph.store';
+import { useGraphStore, useCollisionManager, useAdjacencyList } from '../utils/graph.store';
 import { NodeID } from '../utils/node';
 import { EdgeID } from '../utils/edge';
 import { ComponentType, isEdge } from '../utils/graph.interfaces';
@@ -25,6 +25,7 @@ let edge: EdgeID = 0;
 
 const Toolbar = () => {
     const graphComponents = useGraphStore(state => state.graphComponents);
+    let adjacencyList = useAdjacencyList(state => state);
     let collisionManager = useCollisionManager(state => state);
 
     const [ center, setCenterXYSVG ] = useState([0, 0]);
@@ -59,9 +60,11 @@ const Toolbar = () => {
         const gridCells = collisionManager.getCellsInCircle(cx, cy);
         collisionManager.addToNodeGrid(gridCells, id);
         useCollisionManager.setState(collisionManager);
+        adjacencyList = useAdjacencyList.getState()
+        adjacencyList.set(id, new Set<NodeID>());
+        useAdjacencyList.setState(adjacencyList);
         useGraphStore.setState(
             {
-                adjacencyList: useGraphStore.getState().adjacencyList,
                 graphComponents: {
                     nodes: new Map(
                         [
@@ -102,7 +105,6 @@ const Toolbar = () => {
         useCollisionManager.setState(collisionManager);
         useGraphStore.setState(
             {
-                adjacencyList: useGraphStore.getState().adjacencyList,
                 graphComponents: {
                     nodes: graphComponents.nodes,
                     edges: new Map(
@@ -110,8 +112,8 @@ const Toolbar = () => {
                             ...graphComponents.edges, 
                             [ id, 
                                 {
-                                    to: -1, 
-                                    from: -1, 
+                                    to: undefined, 
+                                    from: undefined, 
                                     cost: 0,
                                     type:componentType,
                                     x1: x1,

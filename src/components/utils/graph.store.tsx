@@ -8,8 +8,7 @@
 
 import { 
     GraphComponents, 
-    AdjacencyList, 
-    ConnectedComponents 
+    AdjacencyList
 } from './graph.interfaces';
 
 import { create } from 'zustand';
@@ -22,18 +21,18 @@ import { CollisionManager } from './collision-manager';
  */
 interface GraphStore {
     graphComponents: GraphComponents,
-    adjacencyList: AdjacencyList,
-    connectedComponents?: ConnectedComponents, // TODO (If useful) 
 };
 
 export const useGraphStore = create<GraphStore>(() => ({
     graphComponents: {
         nodes: new Map<NodeID, NodeIF>(),
         edges: new Map<EdgeID, EdgeIF>()
-    },
-    adjacencyList: new Map<NodeID, Set<EdgeID>>(),
-    // connectedComponents: {} TODO (If useful)
+    }
 }));
+
+export const useAdjacencyList = create<AdjacencyList>(() => (
+    new Map<NodeID, Set<NodeID>>()
+));
 
 export const useCollisionManager = create<CollisionManager>(() => (
     new CollisionManager()

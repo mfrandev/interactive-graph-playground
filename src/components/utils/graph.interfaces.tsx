@@ -14,7 +14,7 @@ export interface GraphComponents {
     edges: Map<EdgeID, EdgeIF>
 }
 
-export type AdjacencyList = Map<NodeID, Set<EdgeID>>;
+export type AdjacencyList = Map<NodeID, Set<NodeID>>;
 
 export interface ConnectedComponents {
     [nodes: NodeID]: [NodeID | undefined]
