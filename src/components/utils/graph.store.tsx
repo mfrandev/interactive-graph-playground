@@ -13,6 +13,9 @@ import {
 } from './graph.interfaces';
 
 import { create } from 'zustand';
+import { NodeID, NodeIF } from './node';
+import { EdgeID, EdgeIF } from './edge';
+import { CollisionManager } from './collision-manager';
 
 /**
  * Hook for accessing the underlying graph data
@@ -25,9 +28,13 @@ interface GraphStore {
 
 export const useGraphStore = create<GraphStore>(() => ({
     graphComponents: {
-        nodes: [],
-        edges: []
+        nodes: new Map<NodeID, NodeIF>(),
+        edges: new Map<EdgeID, EdgeIF>()
     },
-    adjacencyList: {},
+    adjacencyList: new Map<NodeID, Set<EdgeID>>(),
     // connectedComponents: {} TODO (If useful)
 }));
+
+export const useCollisionManager = create<CollisionManager>(() => (
+    new CollisionManager()
+));

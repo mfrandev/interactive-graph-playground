@@ -27,18 +27,6 @@ const Node = (
         onMouseDown?: React.MouseEventHandler<SVGGElement> | undefined
     }) => {
 
-    // Calculate the centerpoint of the circle
-    const circleCenter = styleInfo.viewBoxSide / 2;
-    // const [bbox, setBbox] = React.useState<SVGRect | null>(null);
-    const ref = React.useRef<SVGCircleElement>(null);
-
-    // React.useEffect(() => {
-    //     if (ref.current) {
-    //         const box = ref.current.getBBox();
-    //         setBbox(box);
-    //     }
-    // }, [id, cx, cy]);
-
     // Return a programmatically proportioned, in-line SVG node component
     return (
             <g
@@ -49,30 +37,17 @@ const Node = (
                 onMouseDown(e);
             }}
             >
-                {/* {bbox && (
-                    <rect
-                        x={bbox.x}
-                        y={bbox.y}
-                        width={bbox.width}
-                        height={bbox.height}
-                        stroke="red"
-                        fill="none"
-                        strokeWidth="1"
-                    />
-                )} */}
-
                 <circle 
-                cx = { cx !== undefined ? cx : circleCenter } 
-                cy = { cy !== undefined ? cy : circleCenter } 
-                r={circleCenter - (styleInfo.strokeWidth / 2)} 
+                cx = { cx !== undefined ? cx : styleInfo.circleCenter } 
+                cy = { cy !== undefined ? cy : styleInfo.circleCenter } 
+                r={styleInfo.radius} 
                 stroke-width={styleInfo.strokeWidth} 
                 fill={styleInfo.fill} 
                 stroke={styleInfo.stroke}
-                ref={ref}
                 />
                 <text
-                    x={ cx !== undefined ? cx : circleCenter }
-                    y={ (cy !== undefined ? cy : circleCenter) + styleInfo.fontSize * 1.5}
+                    x={ cx !== undefined ? cx : styleInfo.circleCenter }
+                    y={ (cy !== undefined ? cy : styleInfo.circleCenter) + styleInfo.fontSize * 1.5}
                     textAnchor="middle"
                     dominantBaseline="middle"
                     font-size = {`${styleInfo.fontSize}em`}

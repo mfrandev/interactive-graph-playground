@@ -5,13 +5,16 @@
  * DESCRIPTION: Define/Export the NodeID type.
  */
 
+import { EdgeID } from './edge';
+
 
 export type NodeID = number;
 
 export interface NodeIF {
-    id: NodeID,
     cx: number, 
-    cy: number
+    cy: number,
+    gridCells: Set<string>;
+    connectedEdges: Set<EdgeID>
 }
 
 // Styling for easily adjustable node sizes
@@ -20,5 +23,7 @@ export const styleInfo = {
     strokeWidth: 3,
     fill: "transparent",
     stroke: "black",
-    fontSize: 3
+    fontSize: 3,
+    circleCenter: 50, // viewBoxSide / 2
+    radius: 48.5    // circleCenter - (strokeWidth / 2)
 };
