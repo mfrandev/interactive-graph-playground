@@ -90,18 +90,11 @@ const Canvas = () => {
             adjacencyList = useAdjacencyList.getState();
             if(adjacencyList.has(from))
                 adjacencyList.get(from)?.add(to);
-            else
-                adjacencyList.set(from, new Set<NodeID>([to]));
             if(
                 type === ComponentType.BIDIRECTIONALEDGE    
                 && adjacencyList.has(to)
             )
                 adjacencyList.get(to)?.add(from);
-            else if(
-                type === ComponentType.BIDIRECTIONALEDGE    
-                && !adjacencyList.has(to)
-            )
-                adjacencyList.set(to, new Set<NodeID>([from]))
             useAdjacencyList.setState(adjacencyList);
         }
     }
@@ -130,7 +123,7 @@ const Canvas = () => {
                     updateAdjacencyListDisconnections(edge.from, edge.to, edge.type);
                     edge.from = undefined;
                 }
-                console.log(`Detatching node ${id} and edge ${edgeID}`)
+                // console.log(`NODE DRAG: Detatching node ${id} and edge ${edgeID}`)
                 node.connectedEdges.delete(edgeID);
             }
 
@@ -138,7 +131,7 @@ const Canvas = () => {
             if(newCells.has(edge.x1y1GridCell)) {
                 const isCollision: boolean = collisionManager.findCollisionsBetweenEdgeAndNode(edge.x1, edge.y1, cx, cy);
                 if(!isCollision) {
-                    console.log(`Detatching node ${id} and edge ${edgeID} in cell ${edge.x1y1GridCell}`)
+                    // console.log(`NODE DRAG: Detatching node ${id} and edge ${edgeID} in cell ${edge.x1y1GridCell}`)
                     updateAdjacencyListDisconnections(edge.from, edge.to, edge.type);
                     edge.from = undefined;
                     node.connectedEdges.delete(edgeID);
@@ -149,7 +142,7 @@ const Canvas = () => {
             if(newCells.has(edge.x2y2GridCell)) {
                 const isCollision: boolean = collisionManager.findCollisionsBetweenEdgeAndNode(edge.x2, edge.y2, cx, cy);
                 if(!isCollision) {
-                    console.log(`Detatching node ${id} and edge ${edgeID} in cell ${edge.x2y2GridCell}`);
+                    // console.log(`NODE DRAG: Detatching node ${id} and edge ${edgeID} in cell ${edge.x2y2GridCell}`);
                     updateAdjacencyListDisconnections(edge.from, edge.to, edge.type);
                     edge.to = undefined;
                     node.connectedEdges.delete(edgeID);
@@ -174,7 +167,7 @@ const Canvas = () => {
 
                 // Case 1: Found a collision between node in new cell and an edge's 'from' point
                 if(collisionManager.findCollisionsBetweenEdgeAndNode(edge.x1, edge.y1, cx, cy)) {
-                    // console.log(`Attaching node ${id} and edge ${edgeID} in cell ${cell}`);
+                    // console.log(`NODE DRAG: Attaching node ${id} and edge ${edgeID} in cell ${cell}`);
                     node.connectedEdges.add(edgeID);
                     edge.from = id;
                     updateAdjacencyListConnections(edge.from, edge.to, edge.type);
@@ -182,7 +175,7 @@ const Canvas = () => {
 
                 // Case 2: Found a collision between node in new cell and an edge's 'to' point
                 if(collisionManager.findCollisionsBetweenEdgeAndNode(edge.x2, edge.y2, cx, cy)) {
-                    // console.log(`Attaching node ${id} and edge ${edgeID} in cell ${cell}`);
+                    // console.log(`NODE DRAG: Attaching node ${id} and edge ${edgeID} in cell ${cell}`);
                     node.connectedEdges.add(edgeID);
                     edge.to = id;
                     updateAdjacencyListConnections(edge.from, edge.to, edge.type);
@@ -226,7 +219,7 @@ const Canvas = () => {
         // 2. Detatch edge from nodes which are possibly no longer attached 
         // Case 1: 'from' vertex is not in the newCells list, implying connection broken
         if(oldNodeFrom !== undefined && !newCells.has(edge.x1y1GridCell)) {
-            // console.log(`Detatching edge ${id} from node ${edge.from}`);
+            // console.log(`EDGE DRAG: Detatching edge ${id} from node ${edge.from}`);
             updateAdjacencyListDisconnections(edge.from, edge.to, edge.type);
             edge.from = undefined;
             oldNodeFrom.connectedEdges.delete(id);
@@ -234,7 +227,7 @@ const Canvas = () => {
 
         // Case 2: 'to' vertex is not in the newCells list, implying connection broken 
         if(oldNodeTo !== undefined && !newCells.has(edge.x2y2GridCell)) {
-            // console.log(`Detatching edge ${id} to node ${edge.to}`)
+            // console.log(`EDGE DRAG: Detatching edge ${id} to node ${edge.to}`)
             updateAdjacencyListDisconnections(edge.from, edge.to, edge.type);
             edge.to = undefined;
             oldNodeTo.connectedEdges.delete(id);
@@ -243,7 +236,7 @@ const Canvas = () => {
         // Case 3: 'from' vertex is in the same cell as the old 'from' vertex
         if(oldNodeFrom !== undefined && newCells.has(edge.x1y1GridCell)) {
             if(!collisionManager.findCollisionsBetweenEdgeAndNode(x1, y1, oldNodeFrom.cx, oldNodeFrom.cy)) {
-                // console.log(`Detatching edge ${id} from node ${edge.from}`)
+                // console.log(`EDGE DRAG: Detatching edge ${id} from node ${edge.from}`)
                 updateAdjacencyListDisconnections(edge.from, edge.to, edge.type);
                 edge.from = undefined;
                 oldNodeFrom.connectedEdges.delete(id);
@@ -253,7 +246,7 @@ const Canvas = () => {
         // Case 4: 'to' vertex is in the same cell as the old 'to' vertex
         if(oldNodeTo !== undefined && newCells.has(edge.x2y2GridCell)) {
             if(!collisionManager.findCollisionsBetweenEdgeAndNode(x2, y2, oldNodeTo.cx, oldNodeTo.cy)) {
-                // console.log(`Detatching edge ${id} to node ${edge.to}`)
+                // console.log(`EDGE DRAG: Detatching edge ${id} to node ${edge.to}`)
                 updateAdjacencyListDisconnections(edge.from, edge.to, edge.type);
                 edge.to = undefined;
                 oldNodeTo.connectedEdges.delete(id);
@@ -277,10 +270,10 @@ const Canvas = () => {
                 if(isCollision) {
                     if(isFrom) {
                         edge.from = nodeID;
-                        // console.log(`Attaching edge ${id} from node ${nodeID}`)
+                        // console.log(`EDGE DRAG: Attaching edge ${id} from node ${nodeID}`)
                     } else {
                         edge.to = nodeID;
-                        // console.log(`Attaching edge ${id} to node ${nodeID}`)
+                        // console.log(`EDGE DRAG: Attaching edge ${id} to node ${nodeID}`)
                     }
                     updateAdjacencyListConnections(edge.from, edge.to, edge.type);
                     node.connectedEdges.add(id);
