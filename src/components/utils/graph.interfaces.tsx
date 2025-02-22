@@ -21,6 +21,7 @@ export interface ConnectedComponents {
 }
 
 export enum ComponentType {
+    NONE = -1,
     NODE = 0,
     BIDIRECTIONALEDGE = 1,
     UNIDIRECTIONALEDGE = 2,

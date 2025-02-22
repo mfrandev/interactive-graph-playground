@@ -10,7 +10,8 @@
 import '../../index.css';
 
 import { ComponentType } from '../utils/graph.interfaces';
-import { styleInfo, triangleStyleInfo } from '../utils/edge';
+import { styleInfo as costStyleInfo, triangleStyleInfo } from '../utils/edge';
+import { styleInfo as nodeStyleInfo } from  '../utils/node';
 
     const Edge = ({ 
             type = ComponentType.UNIDIRECTIONALEDGE,
@@ -33,10 +34,6 @@ import { styleInfo, triangleStyleInfo } from '../utils/edge';
             onMouseDown?: React.MouseEventHandler<SVGGElement> | undefined
         }) => {
 
-        // Calculate the centerpoint of the circle
-        const circleCenter = styleInfo.viewBoxSide / 2;
-        // const triangleOffset = triangleStyleInfo.sideLength * 0.2;
-
         // Return a programmatically proportioned, in-line SVG edge component
         return (
         <g
@@ -53,8 +50,9 @@ import { styleInfo, triangleStyleInfo } from '../utils/edge';
                 y1={y1} 
                 x2={x2} 
                 y2={y2} 
-                stroke-width={styleInfo.strokeWidth} 
+                strokeWidth={nodeStyleInfo.strokeWidth} 
                 stroke="black" 
+                strokeLinecap="round"
             />
 
             {
@@ -67,15 +65,15 @@ import { styleInfo, triangleStyleInfo } from '../utils/edge';
             
 
             {/* Display the edge cost in-line, if defined */}
-            { cost && <circle cx={circleCenter} cy={circleCenter} r={circleCenter/2.5}
-            stroke-width={styleInfo.strokeWidth} fill={styleInfo.fill} stroke={styleInfo.stroke}/> }
+            { cost && <circle cx={nodeStyleInfo.circleCenter} cy={nodeStyleInfo.circleCenter} r={nodeStyleInfo.radius}
+            stroke-width={nodeStyleInfo.strokeWidth} fill={costStyleInfo.fill} stroke={costStyleInfo.stroke}/> }
             <g>
                 { cost && <text
-                    x={circleCenter}
-                    y={circleCenter + styleInfo.fontSize * 1.5}
+                    x={nodeStyleInfo.circleCenter}
+                    y={nodeStyleInfo.circleCenter + nodeStyleInfo.fontSize * 1.5}
                     textAnchor="middle"
                     dominantBaseline="middle"
-                    style={{ fontSize: `${styleInfo.fontSize}em`, fill: 'black' }}
+                    style={{ fontSize: `${nodeStyleInfo.fontSize}em`, fill: 'black' }}
                     className="select-none"
                 >
                     {cost}
