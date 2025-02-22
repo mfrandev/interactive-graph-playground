@@ -15,6 +15,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useGraphStore, useCollisionManager, useAdjacencyList } from '../utils/graph.store';
 import { DOMToSVGOnClick, SVGFromGAndSVG } from '../utils/dom-utils'; 
 import Node from '../graph/node.fixture';
+import Highlighter from '../graph/highlighter';
 import { NodeID, NodeIF } from '../utils/node';
 import Edge from '../graph/edge.fixture';
 import { EdgeID, EdgeIF } from '../utils/edge';
@@ -23,6 +24,8 @@ import { ComponentType } from '../utils/graph.interfaces';
 export const CANVASID = 'CanvasSVG';
 
 const Canvas = () => {
+
+    // console.log("Rendering canvas");
 
     // Maintain graph state
     const graphComponents = useGraphStore(state => state.graphComponents);
@@ -40,6 +43,12 @@ const Canvas = () => {
     const [ [ isDraggingEdge, edgeID ], setIsDraggingEdge ] = useState<[boolean, NodeID | undefined]>([false, undefined]);
     const [ [ xDragOffsetNode, yDragOffsetNode ], setDragOffsetNode ] = useState<[number, number]>([0, 0]);
     const [ [ x1DragOffsetEdge, x2DragOffsetEdge, y1DragOffsetEdge, y2DragOffsetEdge ], setDragOffsetEdge ] = useState<[number, number, number, number]>([0, 0, 0, 0]);
+
+    const [ [ isHighlightedEdge, highlightedEdgeID, highlightTypeEdge ], setHighlightEdge ] = useState<[boolean, EdgeID | undefined, ComponentType]>([false, undefined, ComponentType.NONE]);
+    const [ [ x1EdgeHighlight, x2EdgeHighlight, y1EdgeHighlight, y2EdgeHighlight ], setHighlightEdgeCoords ] = useState<[number, number, number, number]>([0, 0, 0, 0]);
+    const [ [ isHighlightedNode, highlightedNodeID, highlightTypeNode ], setHighlightNode ] = useState<[boolean, NodeID | undefined, ComponentType]>([false, undefined, ComponentType.NONE]);
+    const [ [ cxNodeHighlight, cyNodeHighlight ], setHighlightNodeCoords ] = useState<[number, number]>([0, 0]);
+
 
     const [ svgCTM, setSVGCTM ] = useState<DOMMatrix | null>(null);
     const [ inverseSVGCTM, setInverseSVGCTM ] = useState<DOMMatrix | null>(null);
@@ -359,6 +368,13 @@ const Canvas = () => {
         const dragOffsetX = clickPointSVG.x - startingCX;
         const dragOffsetY = clickPointSVG.y - startingCY;
         setDragOffsetNode([dragOffsetX, dragOffsetY]);
+
+        // Manage highlighter state
+        setHighlightNode([true, id, ComponentType.NODE]);
+        setHighlightNodeCoords([startingCX, startingCY]);
+        setHighlightEdge([false, undefined, ComponentType.NONE])
+        e.stopPropagation(); // Prevent the parent canvas component from disabling the highlight
+
     }
 
     const throttleDelay = 16; // ~60 FPS (16ms per frame)
@@ -383,7 +399,10 @@ const Canvas = () => {
             return;
         }
         const [x, y] = result;
-        updateNodePosition(nodeID, x - xDragOffsetNode, y - yDragOffsetNode);
+        const cx = x - xDragOffsetNode;
+        const cy = y - yDragOffsetNode;
+        updateNodePosition(nodeID, cx, cy);
+        setHighlightNodeCoords([cx, cy]);
         // nodeRef.current.querySelector('circle')?.setAttribute('cx', `${x - xDragOffsetNode}`);
         // nodeRef.current.querySelector('circle')?.setAttribute('cy', `${y - yDragOffsetNode}`);
 
@@ -402,15 +421,18 @@ const Canvas = () => {
             return;
         }
         const [x, y] = result;
-        updateNodePosition(nodeID, x - xDragOffsetNode, y - yDragOffsetNode);
+        const cx = x - xDragOffsetNode;
+        const cy = y - yDragOffsetNode
+        updateNodePosition(nodeID, cx, cy);
+        setHighlightNodeCoords([cx, cy]);
         nodeRef.current = null;
         setIsDraggingNode([false, undefined]);
         setDragOffsetNode([0, 0]);
-        console.log("Edges: ", collisionManager.edgeGrid);
-        console.log(graphComponents.edges);
-        console.log("Nodes: ", collisionManager.nodeGrid);
-        console.log(graphComponents.nodes);
-        console.log("Adjacency List: ", adjacencyList);
+        // console.log("Edges: ", collisionManager.edgeGrid);
+        // console.log(graphComponents.edges);
+        // console.log("Nodes: ", collisionManager.nodeGrid);
+        // console.log(graphComponents.nodes);
+        // console.log("Adjacency List: ", adjacencyList);
     }
 
     /**
@@ -419,7 +441,7 @@ const Canvas = () => {
      * @param id 
      * @returns 
      */
-    const handleOnMouseDownEdge = (e: React.MouseEvent<SVGGElement, MouseEvent>, id: EdgeID | undefined) => {
+    const handleOnMouseDownEdge = (e: React.MouseEvent<SVGGElement, MouseEvent>, id: EdgeID | undefined, type: ComponentType) => {
         setIsDraggingEdge([true, id]);
         setDragOffsetEdge([0, 0, 0, 0]);
         edgeRef.current = e.currentTarget;
@@ -454,6 +476,12 @@ const Canvas = () => {
         const dragOffsetY1 = clickPointSVG.y - startingY1;
         const dragOffsetY2 = startingY2 - clickPointSVG.y;
         setDragOffsetEdge([dragOffsetX1, dragOffsetX2, dragOffsetY1, dragOffsetY2]);
+
+        // Manage Highlighter state
+        setHighlightEdge([true, id, type]);
+        setHighlightEdgeCoords([startingX1, startingX2, startingY1, startingY2]);
+        setHighlightNode([false, undefined, ComponentType.NONE])
+        e.stopPropagation(); // Prevent the parent canvas component from disabling the highlight
     }
 
     /**
@@ -476,13 +504,21 @@ const Canvas = () => {
             return;
         }
         const [x, y] = result;
+
+        const x1 = x - x1DragOffsetEdge;
+        const x2 = x + x2DragOffsetEdge;
+        const y1 = y - y1DragOffsetEdge;
+        const y2 = y + y2DragOffsetEdge;
+
         updateEdgePosition(
             edgeID, 
-            x - x1DragOffsetEdge, 
-            x + x2DragOffsetEdge,
-            y - y1DragOffsetEdge,
-            y + y2DragOffsetEdge
+            x1, 
+            x2,
+            y1,
+            y2
         );
+
+        setHighlightEdgeCoords([x1, x2, y1, y2]);
     }
 
     /**
@@ -498,21 +534,27 @@ const Canvas = () => {
             return;
         }
         const [x, y] = result;
+        const x1 = x - x1DragOffsetEdge;
+        const x2 = x + x2DragOffsetEdge;
+        const y1 = y - y1DragOffsetEdge;
+        const y2 = y + y2DragOffsetEdge;
+
+        setHighlightEdgeCoords([x1, x2, y1, y2]);
         updateEdgePosition(
             edgeID, 
-            x - x1DragOffsetEdge, 
-            x + x2DragOffsetEdge,
-            y - y1DragOffsetEdge,
-            y + y2DragOffsetEdge
+            x1, 
+            x2,
+            y1,
+            y2
         );
         edgeRef.current = null;
         setIsDraggingEdge([false, undefined]);
         setDragOffsetEdge([0, 0, 0, 0]);
-        console.log("Edges: ", collisionManager.edgeGrid);
-        console.log(graphComponents.edges);
-        console.log("Nodes: ", collisionManager.nodeGrid);
-        console.log(graphComponents.nodes);
-        console.log("Adjacency List: ", adjacencyList);
+        // console.log("Edges: ", collisionManager.edgeGrid);
+        // console.log(graphComponents.edges);
+        // console.log("Nodes: ", collisionManager.nodeGrid);
+        // console.log(graphComponents.nodes);
+        // console.log("Adjacency List: ", adjacencyList);
     }
     
     const renderNodes = (nodes: Map<NodeID, NodeIF>) => {
@@ -544,11 +586,36 @@ const Canvas = () => {
                     y1={edgeIF.y1}
                     y2={edgeIF.y2}
                     isToolbar={false}
-                    onMouseDown={(e) => handleOnMouseDownEdge(e, edgeID)}
+                    onMouseDown={(e) => handleOnMouseDownEdge(e, edgeID, edgeIF.type)}
                 />
             );
         }
         return edgeComponents;
+    }
+
+    const renderHighlighter = () => {
+        if(isHighlightedEdge) {
+            return(
+                <Highlighter
+                    isActive={true}
+                    type={highlightTypeEdge}
+                    x1={x1EdgeHighlight}
+                    x2={x2EdgeHighlight}
+                    y1={y1EdgeHighlight}
+                    y2={y2EdgeHighlight}
+                    onMouseDown={(e) => {handleOnMouseDownEdge(e, highlightedEdgeID, highlightTypeEdge)}}
+                />
+            )
+        } else if(isHighlightedNode) { 
+            return(    
+                <Highlighter
+                    isActive={true}
+                    type={highlightTypeNode}
+                    cx={cxNodeHighlight}
+                    cy={cyNodeHighlight}
+                />
+            )
+        }
     }
 
     /**
@@ -565,6 +632,12 @@ const Canvas = () => {
                 xmlns="http://www.w3.org/2000/svg"
                 fill="transparent"
 
+                // Disable component highlights. onMouseDown does not propagate up from clicks on components
+                onMouseDown={() =>{
+                   setHighlightEdge([false, undefined, ComponentType.NONE]);
+                   setHighlightNode([false, undefined, ComponentType.NONE]);
+                }}
+
                 onMouseMove={(e) => {
                     if(isDraggingNode) handleOnMouseMoveNode(e);
                     if(isDraggingEdge) handleOnMouseMoveEdge(e);
@@ -576,15 +649,27 @@ const Canvas = () => {
                 id={`${CANVASID}`}
                 ref={svgRef}
                 >
+
+                {/**
+                 * For now, render order matters. 
+                 * 1. We want the edges rendered before their highlights so they can be dragged.
+                 * 2. We want highlights rendered before nodes so the transparent bounding box is not overlayed over the node.
+                 */}
+                {/* Render edges */}
+                {
+                    renderEdges(graphComponents.edges)
+                }
+                {/* Render component highlight */}
+                {
+                    renderHighlighter()
+                }
                 {/* Render nodes */}
                 {
                     renderNodes(graphComponents.nodes)
                 }
 
-                {/* Render edges */}
-                {
-                    renderEdges(graphComponents.edges)
-                }
+
+
             </svg>
         </div>
     );

@@ -26,7 +26,6 @@ const Node = (
         cy?: number | undefined, 
         onMouseDown?: React.MouseEventHandler<SVGGElement> | undefined
     }) => {
-
     // Return a programmatically proportioned, in-line SVG node component
     return (
             <g
@@ -41,7 +40,7 @@ const Node = (
                 cx = { cx !== undefined ? cx : styleInfo.circleCenter } 
                 cy = { cy !== undefined ? cy : styleInfo.circleCenter } 
                 r={styleInfo.radius} 
-                stroke-width={styleInfo.strokeWidth} 
+                strokeWidth={styleInfo.strokeWidth} 
                 fill={styleInfo.fill} 
                 stroke={styleInfo.stroke}
                 />
@@ -50,7 +49,7 @@ const Node = (
                     y={ (cy !== undefined ? cy : styleInfo.circleCenter) + styleInfo.fontSize * 1.5}
                     textAnchor="middle"
                     dominantBaseline="middle"
-                    font-size = {`${styleInfo.fontSize}em`}
+                    fontSize = {`${styleInfo.fontSize}em`}
                     fill = 'black'
                     className="select-none"
                 >

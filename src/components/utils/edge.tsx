@@ -28,11 +28,8 @@ export interface EdgeIF {
 
 // Styling for the center circle allowing visible edge cost
 export const styleInfo = {
-    viewBoxSide: 100,
-    strokeWidth: 3,
     fill: "red",
     stroke: "transparent",
-    fontSize: 3
 };
 
 export const triangleStyleInfo = {

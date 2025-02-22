@@ -27,3 +27,12 @@ export const styleInfo = {
     circleCenter: 50, // viewBoxSide / 2
     radius: 48.5    // circleCenter - (strokeWidth / 2)
 };
+
+export const highlighterStyleInfo = {
+    viewBoxSide: 10,
+    strokeWidth: 1,
+    fill: "red",
+    stroke: "red",
+    circleCenter: 5, // viewBoxSide / 2
+    radius: 4.5    // circleCenter - (strokeWidth / 2)
+};
