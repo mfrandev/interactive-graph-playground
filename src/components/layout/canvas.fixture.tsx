@@ -555,12 +555,15 @@ const Canvas = () => {
         // console.log("Nodes: ", collisionManager.nodeGrid);
         // console.log(graphComponents.nodes);
         // console.log("Adjacency List: ", adjacencyList);
+        // console.log("y: ", y2 - y1, " x: ", x2 - x1);
+        // console.log("Angle of rotation: ", Math.atan2(y2 - y1, x2 - x1));
+        
     }
 
     const [isRepositionHighlighterX1Y1, setIsRepositionHighlighterX1Y1] = useState<boolean>(false);
     const [isRepositionHighlighterX2Y2, setIsRepositionHighlighterX2Y2] = useState<boolean>(false);
 
-    const [[repositionHighlighterXOffset, repositionHighlighterYOffset], setRepositionHighlighterXYOffset] = useState<[number, number]>([0, 0]);
+    const [[repositionHighlighterXOffset, repositionHighlighterYOffset], setRepositionHighlighterXYOffset] = useState<[number, number]>([0, 0]); // Can use this for node scaling too
     const [[repositionHighlighterAdjustedX, repositionHighlighterAdjustedY], setRepositionHighlighterAdjustedXY] = useState<[number, number]>([0, 0]);
 
     const cleanupRepositionState = () => {
@@ -791,6 +794,7 @@ const Canvas = () => {
                     if(isDraggingEdge) handleOnMouseUpEdge(e);
                     if(isRepositionHighlighterX1Y1) handleOnMouseUpX1Y1(e); 
                     if(isRepositionHighlighterX2Y2) handleOnMouseUpX2Y2(e);
+                    // console.log("Adjacency List: ", adjacencyList);
                 }}
                 id={`${CANVASID}`}
                 ref={svgRef}

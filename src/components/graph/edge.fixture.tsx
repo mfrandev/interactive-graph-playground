@@ -58,8 +58,9 @@ import { styleInfo as nodeStyleInfo } from  '../utils/node';
             {
                 type === ComponentType.UNIDIRECTIONALEDGE &&
                 <polygon 
-                    points = {`${x2-triangleStyleInfo.sideLength},${y2} ${x2},${y2} ${x2},${y2+triangleStyleInfo.sideLength}`} 
+                    points = {`${x2},${y2} ${x2-triangleStyleInfo.sideLength},${y2+triangleStyleInfo.sideLength} ${x2+triangleStyleInfo.sideLength},${y2+triangleStyleInfo.sideLength}`} 
                     fill="black" 
+                    transform={`rotate(${((Math.atan2(y2 - y1, x2 - x1) + Math.PI/2) * 180) / Math.PI}, ${x2}, ${y2})`}
                 />
             }
             

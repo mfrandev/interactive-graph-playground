@@ -50,11 +50,11 @@ export const EdgeHighlighter = (
                 {
                     type === ComponentType.UNIDIRECTIONALEDGE &&
                     <polygon 
-                        points = {`${x2-triangleStyleInfo.sideLength},${y2} ${x2},${y2} ${x2},${y2+triangleStyleInfo.sideLength}`} 
-                        stroke="red"
+                        points = {`${x2},${y2} ${x2-triangleStyleInfo.sideLength},${y2+triangleStyleInfo.sideLength} ${x2+triangleStyleInfo.sideLength},${y2+triangleStyleInfo.sideLength}`}                         stroke="red"
                         strokeDasharray="2,6"
                         strokeLinecap="round"
                         strokeOpacity={0.4}
+                        transform={`rotate(${((Math.atan2(y2 - y1, x2 - x1) + Math.PI/2) * 180) / Math.PI}, ${x2}, ${y2})`}
                     />
                 }
                 
