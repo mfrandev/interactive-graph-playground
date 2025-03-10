@@ -28,7 +28,9 @@ export const Highlighter = (
         x2,
         y1,
         y2,
-        onMouseDown = undefined
+        onMouseDown = undefined,
+        onMouseDownX1Y1 = undefined,
+        onMouseDownX2Y2 = undefined
     }:
     {
         isActive: boolean,
@@ -39,7 +41,9 @@ export const Highlighter = (
         x2?: number,
         y1?: number,
         y2?: number,
-        onMouseDown?: React.MouseEventHandler<SVGGElement> | undefined
+        onMouseDown?: React.MouseEventHandler<SVGGElement> | undefined,
+        onMouseDownX1Y1?: React.MouseEventHandler<SVGGElement> | undefined, 
+        onMouseDownX2Y2?: React.MouseEventHandler<SVGGElement> | undefined
     }
 ) => {
 
@@ -65,6 +69,8 @@ export const Highlighter = (
                     y1 = { y1 }
                     y2 = { y2 }
                     type = { type }
+                    onMouseDownX1Y1 = { onMouseDownX1Y1 }
+                    onMouseDownX2Y2 = { onMouseDownX2Y2 }
                 />
             }
 
