@@ -44,11 +44,11 @@ const Canvas = () => {
     const [ [ xDragOffsetNode, yDragOffsetNode ], setDragOffsetNode ] = useState<[number, number]>([0, 0]);
     const [ [ x1DragOffsetEdge, x2DragOffsetEdge, y1DragOffsetEdge, y2DragOffsetEdge ], setDragOffsetEdge ] = useState<[number, number, number, number]>([0, 0, 0, 0]);
 
+    // Node highligheter state during element drag and drop (separate from node scaling/single vertex repositioning)
     const [ [ isHighlightedEdge, highlightedEdgeID, highlightTypeEdge ], setHighlightEdge ] = useState<[boolean, EdgeID | undefined, ComponentType]>([false, undefined, ComponentType.NONE]);
     const [ [ x1EdgeHighlight, x2EdgeHighlight, y1EdgeHighlight, y2EdgeHighlight ], setHighlightEdgeCoords ] = useState<[number, number, number, number]>([0, 0, 0, 0]);
     const [ [ isHighlightedNode, highlightedNodeID, highlightTypeNode ], setHighlightNode ] = useState<[boolean, NodeID | undefined, ComponentType]>([false, undefined, ComponentType.NONE]);
     const [ [ cxNodeHighlight, cyNodeHighlight ], setHighlightNodeCoords ] = useState<[number, number]>([0, 0]);
-
 
     const [ svgCTM, setSVGCTM ] = useState<DOMMatrix | null>(null);
     const [ inverseSVGCTM, setInverseSVGCTM ] = useState<DOMMatrix | null>(null);
@@ -555,6 +555,134 @@ const Canvas = () => {
         // console.log("Nodes: ", collisionManager.nodeGrid);
         // console.log(graphComponents.nodes);
         // console.log("Adjacency List: ", adjacencyList);
+        // console.log("y: ", y2 - y1, " x: ", x2 - x1);
+        // console.log("Angle of rotation: ", Math.atan2(y2 - y1, x2 - x1));
+        
+    }
+
+    const [isRepositionHighlighterX1Y1, setIsRepositionHighlighterX1Y1] = useState<boolean>(false);
+    const [isRepositionHighlighterX2Y2, setIsRepositionHighlighterX2Y2] = useState<boolean>(false);
+
+    const [[repositionHighlighterXOffset, repositionHighlighterYOffset], setRepositionHighlighterXYOffset] = useState<[number, number]>([0, 0]); // Can use this for node scaling too
+    const [[repositionHighlighterAdjustedX, repositionHighlighterAdjustedY], setRepositionHighlighterAdjustedXY] = useState<[number, number]>([0, 0]);
+
+    const cleanupRepositionState = () => {
+        setIsRepositionHighlighterX1Y1(false);
+        setIsRepositionHighlighterX2Y2(false);
+        setRepositionHighlighterXYOffset([0, 0]);
+        setRepositionHighlighterAdjustedXY([0, 0]);
+    }
+
+    const handleOnMouseDownX1Y1 = (e: React.MouseEvent<SVGGElement, MouseEvent>) => {
+        // 1. Make a new highlighter object without end-of-vertex circles
+        setIsRepositionHighlighterX1Y1(true);
+
+        // 2. Calculate and set offset from center of end-of-vertex circle
+        if(!svgRef.current) {
+            cleanupRepositionState();
+            return;
+        }
+        const clickPointSVG = SVGFromGAndSVG(e.currentTarget, svgRef.current, e.clientX, e.clientY);
+        if(!clickPointSVG) {
+            cleanupRepositionState();
+            return;
+        }
+        setRepositionHighlighterXYOffset([clickPointSVG.x - x1EdgeHighlight, clickPointSVG.y - y1EdgeHighlight]);
+        setRepositionHighlighterAdjustedXY([x1EdgeHighlight, y1EdgeHighlight]);
+        
+        // 3. Make sure no undesired, residual onMouseDown effects trigger
+        e.stopPropagation();
+    }
+
+    const handleOnMouseDownX2Y2 = (e: React.MouseEvent<SVGGElement, MouseEvent>) => {
+        // 1. Make a new highlighter object without end-of-vertex circles
+        setIsRepositionHighlighterX2Y2(true);
+
+        // 2. Calculate and set offset from center of end-of-vertex circle
+        if(!svgRef.current) {
+            cleanupRepositionState();
+            return;
+        }
+        const clickPointSVG = SVGFromGAndSVG(e.currentTarget, svgRef.current, e.clientX, e.clientY);
+        if(!clickPointSVG) {
+            cleanupRepositionState();
+            return;
+        }
+        setRepositionHighlighterXYOffset([clickPointSVG.x - x2EdgeHighlight, clickPointSVG.y - y2EdgeHighlight]);
+        setRepositionHighlighterAdjustedXY([x2EdgeHighlight, y2EdgeHighlight]);
+        
+        // 3. Make sure no undesired, residual onMouseDown effects trigger
+        e.stopPropagation();
+    }
+
+    const handleOnMouseMoveX1Y1OrX2Y2 = (e: React.MouseEvent<SVGSVGElement, MouseEvent>) => {
+        if(!isRepositionHighlighterX1Y1 && !isRepositionHighlighterX2Y2) {
+            cleanupRepositionState();
+            return;
+        }
+
+        // Throttle to 60FPS
+        const now = performance.now();
+        if (now - lastEventTime < throttleDelay) {
+            return;
+        }
+        setLastEventTime(now);
+        const result = DOMToSVGOnClick(e, svgCTM, inverseSVGCTM);
+        if(!result) {
+            console.log("Could not derive point");
+            cleanupRepositionState();
+            return;
+        }
+        const [x, y] = result;
+        setRepositionHighlighterAdjustedXY([x - repositionHighlighterXOffset, y - repositionHighlighterYOffset]);
+    }
+
+    const handleOnMouseUpX1Y1 = (e: React.MouseEvent<SVGSVGElement, MouseEvent>) => {
+        if(!isRepositionHighlighterX1Y1) {
+            cleanupRepositionState();
+            return;
+        }
+        const result = DOMToSVGOnClick(e, svgCTM, inverseSVGCTM);
+        if(!result) {
+            cleanupRepositionState();
+            return;
+        }
+        const [x, y] = result;
+        const x1Moved = x - repositionHighlighterXOffset
+        const y1Moved = y - repositionHighlighterYOffset;
+        setHighlightEdgeCoords([x1Moved, x2EdgeHighlight, y1Moved, y2EdgeHighlight]);
+        updateEdgePosition(
+            highlightedEdgeID, 
+            x1Moved, 
+            x2EdgeHighlight,
+            y1Moved,
+            y2EdgeHighlight
+        );
+        cleanupRepositionState();
+    }
+
+    const handleOnMouseUpX2Y2 = (e: React.MouseEvent<SVGSVGElement, MouseEvent>) => {
+        if(!isRepositionHighlighterX2Y2) {
+            cleanupRepositionState();
+            return;
+        }
+        const result = DOMToSVGOnClick(e, svgCTM, inverseSVGCTM);
+        if(!result) {
+            cleanupRepositionState();
+            return;
+        }
+        const [x, y] = result;
+        const x2Moved = x - repositionHighlighterXOffset
+        const y2Moved = y - repositionHighlighterYOffset;
+        setHighlightEdgeCoords([x1EdgeHighlight, x2Moved, y1EdgeHighlight, y2Moved]);
+        updateEdgePosition(
+            highlightedEdgeID, 
+            x1EdgeHighlight, 
+            x2Moved,
+            y1EdgeHighlight,
+            y2Moved
+        );
+        cleanupRepositionState();
     }
     
     const renderNodes = (nodes: Map<NodeID, NodeIF>) => {
@@ -596,6 +724,7 @@ const Canvas = () => {
     const renderHighlighter = () => {
         if(isHighlightedEdge) {
             return(
+                <g>
                 <Highlighter
                     isActive={true}
                     type={highlightTypeEdge}
@@ -604,7 +733,24 @@ const Canvas = () => {
                     y1={y1EdgeHighlight}
                     y2={y2EdgeHighlight}
                     onMouseDown={(e) => {handleOnMouseDownEdge(e, highlightedEdgeID, highlightTypeEdge)}}
+                    onMouseDownX1Y1={ handleOnMouseDownX1Y1 }
+                    onMouseDownX2Y2={ handleOnMouseDownX2Y2 }
                 />
+                {
+                    (isRepositionHighlighterX1Y1 || isRepositionHighlighterX2Y2) &&
+                    <Highlighter
+                    isActive={true}
+                    type={highlightTypeEdge}
+                    x1={ isRepositionHighlighterX1Y1 ? repositionHighlighterAdjustedX : x1EdgeHighlight }
+                    x2={ isRepositionHighlighterX2Y2 ? repositionHighlighterAdjustedX : x2EdgeHighlight }
+                    y1={ isRepositionHighlighterX1Y1 ? repositionHighlighterAdjustedY : y1EdgeHighlight } 
+                    y2={ isRepositionHighlighterX2Y2 ? repositionHighlighterAdjustedY : y2EdgeHighlight }
+                    onMouseDown={undefined}
+                    onMouseDownX1Y1={undefined}
+                    onMouseDownX2Y2={undefined}
+                    />
+                }
+                </g>
             )
         } else if(isHighlightedNode) { 
             return(    
@@ -641,10 +787,14 @@ const Canvas = () => {
                 onMouseMove={(e) => {
                     if(isDraggingNode) handleOnMouseMoveNode(e);
                     if(isDraggingEdge) handleOnMouseMoveEdge(e);
+                    if(isRepositionHighlighterX1Y1 || isRepositionHighlighterX2Y2) handleOnMouseMoveX1Y1OrX2Y2(e);
                 }}
                 onMouseUp={(e) => {
                     if(isDraggingNode) handleOnMouseUpNode(e);
                     if(isDraggingEdge) handleOnMouseUpEdge(e);
+                    if(isRepositionHighlighterX1Y1) handleOnMouseUpX1Y1(e); 
+                    if(isRepositionHighlighterX2Y2) handleOnMouseUpX2Y2(e);
+                    // console.log("Adjacency List: ", adjacencyList);
                 }}
                 id={`${CANVASID}`}
                 ref={svgRef}
