@@ -22,6 +22,8 @@ import { EdgeID, EdgeIF } from '../utils/edge';
 import { ComponentType } from '../utils/graph.interfaces';
 
 export const CANVASID = 'CanvasSVG';
+const BACKSPACE = 'Backspace';
+const DELETE = 'Delete';
 
 const Canvas = () => {
 
@@ -53,6 +55,8 @@ const Canvas = () => {
     const [ svgCTM, setSVGCTM ] = useState<DOMMatrix | null>(null);
     const [ inverseSVGCTM, setInverseSVGCTM ] = useState<DOMMatrix | null>(null);
 
+    // console.log(`Edge: ${isHighlightedEdge}, ${highlightedEdgeID}, ${highlightTypeEdge} \n Node: ${isHighlightedNode}, ${highlightedNodeID}, ${highlightTypeNode}`);
+
     const cacheCanvasCTM = () => {
         if(!svgRef.current) return;
         const ctm = svgRef.current.getScreenCTM();
@@ -79,6 +83,156 @@ const Canvas = () => {
             window.removeEventListener('resize', resizeEventHandler);
         }
     }, []);
+
+    const deleteHighlightedNode = () => {
+        if(highlightedNodeID === undefined) return; // No nodes highlighted
+        const nodeToDelete = graphComponents.nodes.get(highlightedNodeID);
+        if(nodeToDelete === undefined) {
+            console.error(`Tried to delete node ${highlightedNodeID}, but node does not exist!`);
+            return; // State mgmt error
+        }
+
+        // 1. Update collision manager state
+        for(const cell of nodeToDelete.gridCells) { 
+            collisionManager.deleteFromNodeGrid(cell, highlightedNodeID);
+        }
+
+        // 2. Update adjacency list state
+        // Note: This only updates the list for bidirectional edges, and if the "from" node is deleted from a unidirectional edge.
+        // cont. Unidirectional "to" connections need to be updated correctly in step 3. 
+        const adjacentNodes = adjacencyList.get(highlightedNodeID);
+        if(adjacentNodes === undefined) {
+            console.error(`Something went wrong retrieving state adjacency state for node ${highlightedNodeID}! State mgmt broken...`);
+        } else {
+            for(const adjacentNodeID of adjacentNodes) {
+                // "Adjacent nodes are no longer adjacent to deleted node"
+                const adjacentNode = adjacencyList.get(adjacentNodeID);
+                if(adjacentNode === undefined) {
+                    console.error(`Deleted node adjacent to a non-existent node with ID ${adjacentNodeID}! State mgmt broken...`)
+                    break;
+                }
+                adjacentNode.delete(highlightedNodeID);
+                adjacencyList.set(adjacentNodeID, adjacentNode);
+            }
+        }
+        adjacencyList.delete(highlightedNodeID);
+
+        // 3. Update connected edges state and handle adjacency list unidirectional "to" adjacency list case 
+        for(const connectedEdgeID of nodeToDelete.connectedEdges) {
+            const connectedEdge = graphComponents.edges.get(connectedEdgeID);
+            if(connectedEdge === undefined) { 
+                console.error(`Tried to disconnect deleted node ${highlightedNodeID} from edge ${connectedEdgeID}, but this edge does not exist!`);
+                break; // State mgmt error
+            }
+            if(connectedEdge.to === highlightedNodeID) { 
+                // Unidirectional edge "to" node is deleted, so update adjacency list
+                if(connectedEdge.type === ComponentType.UNIDIRECTIONALEDGE && connectedEdge.from !== undefined) {
+                    const fromNodeList = adjacencyList.get(connectedEdge.from);
+                    if(fromNodeList === undefined) {
+                        console.error(`Could not retrieve the adjancency list data for node ${connectedEdge.from}. State mgmt broken...`);
+                    } else {
+                        fromNodeList.delete(highlightedNodeID);
+                        adjacencyList.set(connectedEdge.from, fromNodeList);
+                    }
+                }
+                connectedEdge.to = undefined;
+            }
+            if(connectedEdge.from === highlightedNodeID) connectedEdge.from = undefined;
+            graphComponents.edges.set(connectedEdgeID, connectedEdge);
+        }
+
+
+        // 4. Clear Drag and drop state (since deletes during drag and drop are valid)
+        dragAndDropFailureCleanup();
+
+        // 5. Clear highlighter state
+        clearAllHighlighterState();
+
+        // 6. Delete from graph component state
+        graphComponents.nodes.delete(highlightedNodeID);
+
+        // 7. Sync store states
+        useGraphStore.setState({ graphComponents });
+        useAdjacencyList.setState(adjacencyList);
+        useCollisionManager.setState(collisionManager);
+
+        // TODO: Implement global node ID tracker so it accounds for this deletion and spawns nodes with valid IDs. 
+
+    }
+
+    /**
+     * Errors:
+     * 1. Deleting an edge does not update the adjacency list
+     * 2.
+     * @returns 
+     */
+    const deleteHighlightedEdge = () => {
+        if(highlightedEdgeID === undefined) return; // No edges highlighted
+        const edgeToDelete = graphComponents.edges.get(highlightedEdgeID);
+        if(edgeToDelete === undefined) {
+            console.error(`Tried to delete edge ${highlightedEdgeID}, but edge does not exist!`);
+            return; // State mgmt error
+        }
+
+        // 1. Update collision manager state
+        collisionManager.deleteFromEdgeGrid(edgeToDelete.x1y1GridCell, highlightedEdgeID);
+        collisionManager.deleteFromEdgeGrid(edgeToDelete.x2y2GridCell, highlightedEdgeID);
+
+        // 2. Update adjacency list state
+        if(edgeToDelete.to !== undefined && edgeToDelete.from !== undefined) {
+            console.log("Updating adjacency list after edge delete")
+            const toNodeList = adjacencyList.get(edgeToDelete.to);
+            const fromNodeList = adjacencyList.get(edgeToDelete.from);
+            if(toNodeList === undefined || fromNodeList === undefined) {
+                console.error(`Could not retrieve the adjancency list data for nodes ${edgeToDelete.to} OR ${edgeToDelete.from}. State mgmt broken...`);
+            } else {
+                toNodeList.delete(edgeToDelete.from);
+                fromNodeList.delete(edgeToDelete.to);
+                adjacencyList.set(edgeToDelete.to, toNodeList);
+                adjacencyList.set(edgeToDelete.from, fromNodeList);
+            }
+            console.log("updated adj list after delete: ", adjacencyList);
+        }
+        
+        // 3. Update connected edges state
+        if(edgeToDelete.to !== undefined) {
+            // Nodes no longer connected via this edge
+            const toNode = graphComponents.nodes.get(edgeToDelete.to);
+            if(toNode === undefined) {
+                console.error(`Deleted edge ${highlightedEdgeID} was connected "to" node ${edgeToDelete.to}, but node ${edgeToDelete.to} doesn't exist! State mgmt broken...`);
+            } else {
+                toNode.connectedEdges.delete(highlightedEdgeID);
+                graphComponents.nodes.set(edgeToDelete.to, toNode);
+            }
+        }
+        if(edgeToDelete.from !== undefined) {
+            const fromNode = graphComponents.nodes.get(edgeToDelete.from);
+            if(fromNode === undefined) {
+                console.error(`Deleted edge ${highlightedEdgeID} was connected "from" node ${edgeToDelete.from}, but node ${edgeToDelete.from} doesn't exist! State mgmt broken...`);
+            } else {
+                fromNode.connectedEdges.delete(highlightedEdgeID);
+                graphComponents.nodes.set(edgeToDelete.from, fromNode);
+            }
+        }
+
+
+        // 4. Clear Drag and drop state (since deletes during drag and drop are valid)
+        dragAndDropFailureCleanup();
+
+        // 5. Clear highlighter state
+        clearAllHighlighterState();
+
+        // 6. Delete from graph component state
+        graphComponents.edges.delete(highlightedEdgeID);
+
+        // 7. Sync store states
+        useGraphStore.setState({ graphComponents });
+        useAdjacencyList.setState(adjacencyList);
+        useCollisionManager.setState(collisionManager);
+
+        // TODO: Implement global edge ID tracker so it accounds for this deletion and spawns edges with valid IDs. 
+
+    }
 
     const updateAdjacencyListDisconnections = (from: NodeID | undefined, to: NodeID | undefined, type: ComponentType) => {
         if(from !== undefined && to !== undefined) {
@@ -336,6 +490,13 @@ const Canvas = () => {
         }
     }
 
+    const clearAllHighlighterState = () => {
+        setHighlightNode([false, undefined, ComponentType.NONE]);
+        setHighlightNodeCoords([0, 0]);
+        setHighlightEdge([false, undefined, ComponentType.NONE]);
+        setHighlightEdgeCoords([0, 0, 0, 0]);
+    }
+
     /**
      * Case when user clicks on a node
      * @param e
@@ -373,6 +534,8 @@ const Canvas = () => {
         setHighlightNode([true, id, ComponentType.NODE]);
         setHighlightNodeCoords([startingCX, startingCY]);
         setHighlightEdge([false, undefined, ComponentType.NONE])
+        console.log(`On mouse down node: ${isHighlightedEdge},${isHighlightedNode}`);
+
         e.stopPropagation(); // Prevent the parent canvas component from disabling the highlight
 
     }
@@ -480,7 +643,8 @@ const Canvas = () => {
         // Manage Highlighter state
         setHighlightEdge([true, id, type]);
         setHighlightEdgeCoords([startingX1, startingX2, startingY1, startingY2]);
-        setHighlightNode([false, undefined, ComponentType.NONE])
+        setHighlightNode([false, undefined, ComponentType.NONE]);
+        console.log(`On mouse down edge: ${isHighlightedEdge},${isHighlightedNode}`);
         e.stopPropagation(); // Prevent the parent canvas component from disabling the highlight
     }
 
@@ -765,6 +929,28 @@ const Canvas = () => {
     }
 
     /**
+     * This is getting updated every render, so the useEffect directly below triggers every render as well.
+     * This is an inefficient solution, but it gets around the event listener closure problem for now.  
+     */
+    const deleteComponentHandler = (e: globalThis.KeyboardEvent) => {
+        if(e.key !== BACKSPACE && e.key !== DELETE) return; // did not press delete/backspace
+        // console.log("Is highlighted edge? ", isHighlightedEdge, " Is highlighted node? ", isHighlightedNode);
+        console.log(`Edge: ${isHighlightedEdge}, ${highlightedEdgeID}, ${highlightTypeEdge} \n Node: ${isHighlightedNode}, ${highlightedNodeID}, ${highlightTypeNode}`);
+
+        if(!isHighlightedEdge && !isHighlightedNode) return; // no highlighted component to delete
+        console.log(e);
+        if(isHighlightedNode) deleteHighlightedNode();
+        if(isHighlightedEdge) deleteHighlightedEdge();
+    }
+
+        // This only works because it is updated every render, which is horribly inefficient. 
+        // TODO: Come back after feature development and optimize.
+        useEffect(() => {
+            window.addEventListener('keydown', deleteComponentHandler);
+            return () => window.removeEventListener('keydown', deleteComponentHandler);
+        }, [isHighlightedNode, isHighlightedEdge, deleteComponentHandler]);
+
+    /**
      * END DRAG AND DROP FOR EDGES
      */
 
@@ -780,6 +966,8 @@ const Canvas = () => {
 
                 // Disable component highlights. onMouseDown does not propagate up from clicks on components
                 onMouseDown={() =>{
+                    console.log(`Edge: ${isHighlightedEdge}, ${highlightedEdgeID}, ${highlightTypeEdge} \n Node: ${isHighlightedNode}, ${highlightedNodeID}, ${highlightTypeNode}`);
+
                    setHighlightEdge([false, undefined, ComponentType.NONE]);
                    setHighlightNode([false, undefined, ComponentType.NONE]);
                 }}
@@ -789,13 +977,15 @@ const Canvas = () => {
                     if(isDraggingEdge) handleOnMouseMoveEdge(e);
                     if(isRepositionHighlighterX1Y1 || isRepositionHighlighterX2Y2) handleOnMouseMoveX1Y1OrX2Y2(e);
                 }}
+
                 onMouseUp={(e) => {
                     if(isDraggingNode) handleOnMouseUpNode(e);
                     if(isDraggingEdge) handleOnMouseUpEdge(e);
                     if(isRepositionHighlighterX1Y1) handleOnMouseUpX1Y1(e); 
                     if(isRepositionHighlighterX2Y2) handleOnMouseUpX2Y2(e);
-                    // console.log("Adjacency List: ", adjacencyList);
+                    console.log("Adjacency List: ", adjacencyList);
                 }}
+
                 id={`${CANVASID}`}
                 ref={svgRef}
                 >
