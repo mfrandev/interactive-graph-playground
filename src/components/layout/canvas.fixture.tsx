@@ -22,8 +22,8 @@ import { EdgeID, EdgeIF } from '../utils/edge';
 import { ComponentType } from '../utils/graph.interfaces';
 
 export const CANVASID = 'CanvasSVG';
-const BACKSPACE = 'Backspace';
-const DELETE = 'Delete';
+export const BACKSPACE = 'Backspace';
+export const DELETE = 'Delete';
 
 const Canvas = () => {
 
@@ -848,6 +848,21 @@ const Canvas = () => {
         );
         cleanupRepositionState();
     }
+
+    // Each edge can use the returned function as a callback to update its cost [love some curry :)]
+    const updateEdgeCost = (edgeID: EdgeID) => {
+        return (newCost: number | undefined) => {
+            useGraphStore.setState((state) => {
+                const edgeIF = state.graphComponents.edges.get(edgeID);
+                if(edgeIF === undefined) return state;
+                state.graphComponents.edges.set(edgeID, { ...edgeIF, cost: newCost });
+
+                // TODO: OPTIMIZE this temporary workaround, since forcing re-render of the edge cost text re-renders the entire canvas. 
+                setHighlightEdge([isHighlightedEdge, highlightedEdgeID, highlightTypeEdge]);
+                return { ...state };
+            })
+        }
+    }
     
     const renderNodes = (nodes: Map<NodeID, NodeIF>) => {
         const nodeComponents = [];
@@ -879,6 +894,7 @@ const Canvas = () => {
                     y2={edgeIF.y2}
                     isToolbar={false}
                     onMouseDown={(e) => handleOnMouseDownEdge(e, edgeID, edgeIF.type)}
+                    updateEdgeCost={updateEdgeCost(edgeID)}
                 />
             );
         }
@@ -994,14 +1010,16 @@ const Canvas = () => {
                  * For now, render order matters. 
                  * 1. We want the edges rendered before their highlights so they can be dragged.
                  * 2. We want highlights rendered before nodes so the transparent bounding box is not overlayed over the node.
-                 */}
+                 * 3. UPDATE: We render the highlighter first so components fully render. This will have to be fixed at some point, perhaps making the highlight part of the component?
+                 */
+                }
+                    {/* Render component highlight */}
+                {
+                    renderHighlighter()
+                }
                 {/* Render edges */}
                 {
                     renderEdges(graphComponents.edges)
-                }
-                {/* Render component highlight */}
-                {
-                    renderHighlighter()
                 }
                 {/* Render nodes */}
                 {
