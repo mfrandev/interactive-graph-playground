@@ -28,7 +28,8 @@ export interface EdgeIF {
 
 // Styling for the center circle allowing visible edge cost
 export const styleInfo = {
-    fill: "red",
+    fill: "#66FF99", // light green
+    focusFill: "orange",
     stroke: "transparent",
 };
 

@@ -114,7 +114,7 @@ const Toolbar = () => {
                                 {
                                     to: undefined, 
                                     from: undefined, 
-                                    cost: 0,
+                                    cost: undefined,
                                     type:componentType,
                                     x1: x1,
                                     x2: x2,
