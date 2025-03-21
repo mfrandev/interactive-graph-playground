@@ -21,6 +21,8 @@ import Edge from '../graph/edge.fixture';
 import { EdgeID, EdgeIF } from '../utils/edge';
 import { ComponentType } from '../utils/graph.interfaces';
 
+import { bfs } from '../../algorithms/bfs';
+
 export const CANVASID = 'CanvasSVG';
 export const BACKSPACE = 'Backspace';
 export const DELETE = 'Delete';
@@ -949,12 +951,13 @@ const Canvas = () => {
      * This is an inefficient solution, but it gets around the event listener closure problem for now.  
      */
     const deleteComponentHandler = (e: globalThis.KeyboardEvent) => {
+        if(e.key === 'b') console.log(bfs(adjacencyList, 0));
         if(e.key !== BACKSPACE && e.key !== DELETE) return; // did not press delete/backspace
         // console.log("Is highlighted edge? ", isHighlightedEdge, " Is highlighted node? ", isHighlightedNode);
-        console.log(`Edge: ${isHighlightedEdge}, ${highlightedEdgeID}, ${highlightTypeEdge} \n Node: ${isHighlightedNode}, ${highlightedNodeID}, ${highlightTypeNode}`);
+        // console.log(`Edge: ${isHighlightedEdge}, ${highlightedEdgeID}, ${highlightTypeEdge} \n Node: ${isHighlightedNode}, ${highlightedNodeID}, ${highlightTypeNode}`);
 
         if(!isHighlightedEdge && !isHighlightedNode) return; // no highlighted component to delete
-        console.log(e);
+        // console.log(e);
         if(isHighlightedNode) deleteHighlightedNode();
         if(isHighlightedEdge) deleteHighlightedEdge();
     }
