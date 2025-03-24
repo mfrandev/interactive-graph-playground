@@ -22,9 +22,8 @@ export const bfs = (graph: AdjacencyList, start: NodeID): AlgoState  => {
         const neighbors = graph.get(currentNode);
         if(neighbors === undefined) return undefined; // Something went seriously wrong
         for(const neighbor of neighbors) {
-            if(!visited.has(neighbor)) {
-                q.push(neighbor);
-            }
+            if(visited.has(neighbor) || q.includes(neighbor)) continue;
+            q.push(neighbor);
         }
         traversalStates.states.push({
             currentNode: currentNode,
