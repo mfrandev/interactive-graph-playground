@@ -4,11 +4,13 @@ import { TraversalStepNext, TraversalStepPrevious } from './traversal-step.fixtu
 const TraversalControlToolbar = (
     {
         incrementTraversalFunction,
-        decrementTraversalFunction
+        decrementTraversalFunction,
+        playPauseTraveralFunction
     }:
     {
         incrementTraversalFunction: () => void,
-        decrementTraversalFunction: () => void
+        decrementTraversalFunction: () => void,
+        playPauseTraveralFunction: () => void
     }
 ) => {
     return (
@@ -16,7 +18,9 @@ const TraversalControlToolbar = (
             <TraversalStepPrevious
                 decrementTraversalFunction={decrementTraversalFunction}
             />
-            <PlayPause/>
+            <PlayPause
+                playPauseTraversalFunction={playPauseTraveralFunction}
+            />
             <TraversalStepNext
                 incrementTraversalFunction={incrementTraversalFunction}
             />

@@ -5,22 +5,59 @@ import TraversalControlToolbar from "./traversal-control-toolbar.fixture";
 
 import { useState } from 'react';
 
+const SECONDS_TO_MILLISECONDS = 1000;
+
 const TraversalStateDisplay = () => {
 
     const [ traversalIndex, setTraversalIndex ] = useState<number>(0);
+    const [ isPaused, setIsPaused ] = useState<boolean>(true);
+    const [ interval, setUpdateInterval ] = useState<NodeJS.Timeout | null>(null);
 
     let adjacencyList = useAdjacencyList(state => state);
     let traversal = bfs(adjacencyList, 0);
 
     const incrementTraversalIndex = () => {
-        if(traversal !== undefined && traversalIndex >= traversal.states.length - 1) return;
+        if(!isPaused || traversal === undefined) return;
+        if(traversalIndex >= traversal.states.length - 1) return;
         setTraversalIndex(traversalIndex + 1);
     }
 
     const decrementTraversalIndex = () => {
-        if(traversal !== undefined && traversalIndex <= 0) return;
+        if(!isPaused || traversal === undefined) return;
+        if(traversalIndex <= 0) return;
         setTraversalIndex(traversalIndex - 1);
     }
+
+    const playPauseTraversal = () => {
+        if(traversal === undefined) return; // No traversal to play/pause
+        if(isPaused) { // play
+            setIsPaused(false);
+            const interval = setInterval(() => {
+                if(traversal !== undefined) {
+
+                    // Use this functional update to avoid stale closure !!
+                    setTraversalIndex((t) => {
+                        if(traversal !== undefined && t >= traversal.states.length - 1) {
+                            clearInterval(interval);
+                            setUpdateInterval(null);
+                            setIsPaused(true);
+                            return t;
+                        }
+                        return t + 1;
+                    });
+                } else {
+                    setIsPaused(true);
+                    clearInterval(interval);
+                }
+            }, SECONDS_TO_MILLISECONDS);
+            setUpdateInterval(interval);
+        } else { // pause, clear the interval
+            setIsPaused(true);
+            if(interval !== null)
+                clearInterval(interval);
+                setUpdateInterval(null);
+        }
+    };
 
     const display = () => {
         console.log("clicked");
@@ -33,9 +70,11 @@ const TraversalStateDisplay = () => {
         <div className = "flex flex-col bg-gray-200 h-1/4"
         onClick={display}
         >
+            Paused: {isPaused ? "true" : "false"}
             <TraversalControlToolbar 
                 incrementTraversalFunction = {incrementTraversalIndex}
                 decrementTraversalFunction = {decrementTraversalIndex}
+                playPauseTraveralFunction = {playPauseTraversal}
             />
             {AlgoTypeStrings[(traversal !== undefined && traversal.algorithm in AlgoTypeStrings ? traversal.algorithm : "") as (keyof typeof AlgoTypeStrings)]} Traversal Data Frame {traversalIndex + 1} / {traversal !== undefined ? traversal.states.length : "undefined"}:
             {traversal && traversal.states && traversal.states[traversalIndex] && 
