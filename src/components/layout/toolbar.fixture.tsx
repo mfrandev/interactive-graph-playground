@@ -132,7 +132,7 @@ const Toolbar = () => {
     }
 
     return (
-        <div className="absolute flex flex-col gap-y-2 h-dvh place-content-center p-3">
+        <div className="flex flex-col gap-y-2 place-content-center p-3">
             <AddComponentButton 
                 onClickFunction={() => addNode(node + 1 > 20 ? 20 : node++)}
                 componentType={ComponentType.NODE} 

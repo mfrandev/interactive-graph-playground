@@ -951,7 +951,7 @@ const Canvas = () => {
      * This is an inefficient solution, but it gets around the event listener closure problem for now.  
      */
     const deleteComponentHandler = (e: globalThis.KeyboardEvent) => {
-        if(e.key === 'b') console.log(bfs(adjacencyList, 0));
+        if(e.key === "b") console.log(bfs(adjacencyList, 0));
         if(e.key !== BACKSPACE && e.key !== DELETE) return; // did not press delete/backspace
         // console.log("Is highlighted edge? ", isHighlightedEdge, " Is highlighted node? ", isHighlightedNode);
         // console.log(`Edge: ${isHighlightedEdge}, ${highlightedEdgeID}, ${highlightTypeEdge} \n Node: ${isHighlightedNode}, ${highlightedNodeID}, ${highlightTypeNode}`);
@@ -974,11 +974,11 @@ const Canvas = () => {
      */
 
     return (
-        <div className={`absolute h-dvh w-screen bg-[url('')] bg-no-repeat bg-cover bg-center bg-opacity-50`}
+        <div className={`w-screen bg-[url('')] bg-no-repeat bg-cover bg-center bg-opacity-50`}
         >
             <svg
                 width='100%'
-                height='100%'
+                height='100%' 
                 viewBox = "0 0 1000 1000"
                 xmlns="http://www.w3.org/2000/svg"
                 fill="transparent"
@@ -1038,29 +1038,3 @@ const Canvas = () => {
 }  
 
 export default Canvas;
-
-// const deleteEdge = (id: EdgeID) => {
-    //     if(graphComponents.edges.length < 0) return;
-    //     useGraphStore.setState(
-    //         {
-    //             adjacencyList: useGraphStore.getState().adjacencyList,
-    //             graphComponents: {
-    //                 nodes: graphComponents.nodes,
-    //                 edges: graphComponents.edges.filter((edges) => edges.id !== id)
-    //             }
-    //         }
-    //     );
-    // }
-
-    // const deleteNode = (id: NodeID) => {
-    //     if(graphComponents.nodes.length < 0) return;
-    //     useGraphStore.setState(
-    //         {
-    //             adjacencyList: useGraphStore.getState().adjacencyList,
-    //             graphComponents: {
-    //                 nodes: graphComponents.nodes.filter((nodeID: NodeID) => nodeID !== id),
-    //                 edges: graphComponents.edges
-    //             }
-    //         }
-    //     );
-    // }

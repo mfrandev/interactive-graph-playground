@@ -6,9 +6,9 @@ import Canvas from './canvas.fixture';
 const GraphMakerUI = () => {
 
     return (
-        <div className='flex'>
-            <Canvas/>
+        <div className='flex h-3/4'>
             <Toolbar/>
+            <Canvas/>
         </div>
     );
 

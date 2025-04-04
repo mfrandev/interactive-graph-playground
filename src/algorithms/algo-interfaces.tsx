@@ -7,8 +7,12 @@ export enum AlgoType {
     AStar = 4
 };
 
+export const AlgoTypeStrings = {
+    1: "BFS",
+};
+
 export interface BFSStateSnapshot {
-    currentNode: NodeID,
+    currentNode: NodeID | "Complete",
     queue: Set<NodeID>,
     visited: Set<NodeID>
 };
