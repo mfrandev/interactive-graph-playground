@@ -2,12 +2,13 @@ import { useAdjacencyList } from "../utils/graph.store";
 import { bfs } from "../../algorithms/bfs";
 import { AlgoTypeStrings } from "../../algorithms/algo-interfaces";
 import TraversalControlToolbar from "./traversal-control-toolbar.fixture";
+import TraversalStateDisplay from "./traversal-state-display";
 
 import { useState } from 'react';
 
 const SECONDS_TO_MILLISECONDS = 1000;
 
-const TraversalStateDisplay = () => {
+const TraversalToolbar = () => {
 
     const [ traversalIndex, setTraversalIndex ] = useState<number>(0);
     const [ isPaused, setIsPaused ] = useState<boolean>(true);
@@ -70,20 +71,23 @@ const TraversalStateDisplay = () => {
         <div className = "flex flex-col bg-gray-200 h-1/4"
         onClick={display}
         >
-            Paused: {isPaused ? "true" : "false"}
+            <div className="flex justify-center pt-3">
+                <div className="">
+                    <span>
+                        Traversal <span className={""/*isPaused ? "text-orange-50" : "text-green-50"*/}>{isPaused ? "Paused" : "Playing"}</span>, {AlgoTypeStrings[(traversal !== undefined && traversal.algorithm in AlgoTypeStrings ? traversal.algorithm : "") as (keyof typeof AlgoTypeStrings)]} State Frame { traversal !== undefined ? `${(traversalIndex + 1)} / ${traversal.states.length}` : "N/a"}
+                    </span>
+                </div>
+            </div>
             <TraversalControlToolbar 
                 incrementTraversalFunction = {incrementTraversalIndex}
                 decrementTraversalFunction = {decrementTraversalIndex}
                 playPauseTraveralFunction = {playPauseTraversal}
             />
-            {AlgoTypeStrings[(traversal !== undefined && traversal.algorithm in AlgoTypeStrings ? traversal.algorithm : "") as (keyof typeof AlgoTypeStrings)]} Traversal Data Frame {traversalIndex + 1} / {traversal !== undefined ? traversal.states.length : "undefined"}:
             {traversal && traversal.states && traversal.states[traversalIndex] && 
-                <div key={traversalIndex}>
-                    current: {traversal.states[traversalIndex]?.currentNode} queue: {traversal.states[traversalIndex]?.queue ? [...traversal.states[traversalIndex].queue].map((e) => e + ", ") : ''} visited: {traversal.states[traversalIndex]?.visited ? [...traversal.states[traversalIndex].visited].map((elem) => elem + ", ") : ''}
-                </div>
+                <TraversalStateDisplay traversal = {traversal} traversalIndex = {traversalIndex} />
             }
         </div>       
     );
 }
 
-export default TraversalStateDisplay;
+export default TraversalToolbar;

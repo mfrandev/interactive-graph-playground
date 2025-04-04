@@ -12,7 +12,7 @@ export const AlgoTypeStrings = {
 };
 
 export interface BFSStateSnapshot {
-    currentNode: NodeID,
+    currentNode: NodeID | "Complete",
     queue: Set<NodeID>,
     visited: Set<NodeID>
 };
