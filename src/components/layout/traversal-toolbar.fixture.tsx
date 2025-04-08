@@ -1,8 +1,9 @@
-import { useAdjacencyList } from "../utils/graph.store";
+import { useAdjacencyList, useGraphHighlightStateStore } from "../utils/graph.store";
 import { bfs } from "../../algorithms/bfs";
 import { AlgoTypeStrings } from "../../algorithms/algo-interfaces";
 import TraversalControlToolbar from "./traversal-control-toolbar.fixture";
 import TraversalStateDisplay from "./traversal-state-display";
+import { TRAVERSAL_COMPLETE } from "../utils/graph.interfaces";
 
 import { useState } from 'react';
 
@@ -17,16 +18,37 @@ const TraversalToolbar = () => {
     let adjacencyList = useAdjacencyList(state => state);
     let traversal = bfs(adjacencyList, 0);
 
+    const updateGraphHighlightState = (index: number | undefined) => {
+        if(index === undefined || traversal === null || traversal === undefined) {
+            useGraphHighlightStateStore.setState({
+                currentNode: -1,
+                visitingNodes: new Set<number>(),
+                visitedNodes: new Set<number>()
+            });
+        } 
+        else {
+            useGraphHighlightStateStore.setState({
+                currentNode: traversal.states[index].currentNode === "Complete" ? TRAVERSAL_COMPLETE : traversal.states[index].currentNode,
+                visitingNodes: new Set<number>(), // TODO: implement this once there's a traversal algorithm that uses it.
+                visitedNodes: traversal.states[index].visited
+            });
+        }
+    }
+
     const incrementTraversalIndex = () => {
         if(!isPaused || traversal === undefined) return;
         if(traversalIndex >= traversal.states.length - 1) return;
-        setTraversalIndex(traversalIndex + 1);
+        const newTraversalIndex: number = traversalIndex + 1;
+        updateGraphHighlightState(newTraversalIndex);
+        setTraversalIndex(newTraversalIndex);
     }
 
     const decrementTraversalIndex = () => {
         if(!isPaused || traversal === undefined) return;
         if(traversalIndex <= 0) return;
-        setTraversalIndex(traversalIndex - 1);
+        const newTraversalIndex: number = traversalIndex - 1;
+        updateGraphHighlightState(newTraversalIndex);
+        setTraversalIndex(newTraversalIndex);
     }
 
     const playPauseTraversal = () => {
@@ -42,9 +64,12 @@ const TraversalToolbar = () => {
                             clearInterval(interval);
                             setUpdateInterval(null);
                             setIsPaused(true);
+                            updateGraphHighlightState(t);
                             return t;
                         }
-                        return t + 1;
+                        const nextIndex: number = t + 1;
+                        updateGraphHighlightState(nextIndex);
+                        return nextIndex;
                     });
                 } else {
                     setIsPaused(true);
@@ -57,6 +82,7 @@ const TraversalToolbar = () => {
             if(interval !== null)
                 clearInterval(interval);
                 setUpdateInterval(null);
+                updateGraphHighlightState(undefined);
         }
     };
 

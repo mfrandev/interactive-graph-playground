@@ -15,6 +15,7 @@ import { create } from 'zustand';
 import { NodeID, NodeIF } from './node';
 import { EdgeID, EdgeIF } from './edge';
 import { CollisionManager } from './collision-manager';
+import { GraphHighlightState } from './graph.interfaces';
 
 /**
  * Hook for accessing the underlying graph data
@@ -28,6 +29,12 @@ export const useGraphStore = create<GraphStore>(() => ({
         nodes: new Map<NodeID, NodeIF>(),
         edges: new Map<EdgeID, EdgeIF>()
     }
+}));
+
+export const useGraphHighlightStateStore = create<GraphHighlightState>(() => ({
+    currentNode: -1,
+    visitingNodes: new Set<NodeID>(),
+    visitedNodes: new Set<NodeID>(),
 }));
 
 export const useAdjacencyList = create<AdjacencyList>(() => (
