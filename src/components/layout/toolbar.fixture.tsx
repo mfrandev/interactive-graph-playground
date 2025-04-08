@@ -8,6 +8,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { NodeHighlights } from '../utils/node';
 
 import '../../index.css';
 
@@ -74,7 +75,8 @@ const Toolbar = () => {
                                     cx: cx, 
                                     cy: cy,
                                     gridCells: gridCells,
-                                    connectedEdges: new Set<EdgeID>()
+                                    connectedEdges: new Set<EdgeID>(),
+                                    highlight: NodeHighlights.NONE
                                 }
                             ]
                         ]

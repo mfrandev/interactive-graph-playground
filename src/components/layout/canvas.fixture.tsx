@@ -12,11 +12,11 @@ import '../../index.css';
 
 import { useState, useRef, useEffect } from 'react';
 
-import { useGraphStore, useCollisionManager, useAdjacencyList } from '../utils/graph.store';
+import { useGraphStore, useCollisionManager, useAdjacencyList, useGraphHighlightStateStore } from '../utils/graph.store';
 import { DOMToSVGOnClick, SVGFromGAndSVG } from '../utils/dom-utils'; 
 import Node from '../graph/node.fixture';
 import Highlighter from '../graph/highlighter';
-import { NodeID, NodeIF } from '../utils/node';
+import { NodeID, NodeIF, NodeHighlights } from '../utils/node';
 import Edge from '../graph/edge.fixture';
 import { EdgeID, EdgeIF } from '../utils/edge';
 import { ComponentType } from '../utils/graph.interfaces';
@@ -35,6 +35,36 @@ const Canvas = () => {
     const graphComponents = useGraphStore(state => state.graphComponents);
     let adjacencyList = useAdjacencyList(state => state);
     let collisionManager = useCollisionManager(state => state);
+
+    useGraphHighlightStateStore.subscribe((state, prevState) => {
+        const nodeIFStates = useGraphStore.getState().graphComponents.nodes;
+        console.log(state);
+        for(const nodeIF of nodeIFStates.values()) {
+            nodeIF.highlight = NodeHighlights.NONE;
+        }
+        if(state.currentNode !== prevState.currentNode) {
+            const current = nodeIFStates.get(state.currentNode);
+            if(current !== undefined)
+                current.highlight = NodeHighlights.CURRENT;
+        }
+        if(state.visitingNodes !== prevState.visitingNodes) {
+            for(const nodeID of state.visitingNodes) {
+                const visiting = nodeIFStates.get(nodeID);
+                if(visiting !== undefined)
+                    visiting.highlight = NodeHighlights.VISITING;
+            }
+        }
+        if(state.visitedNodes !== prevState.visitedNodes) {
+            for(const nodeID of state.visitedNodes) {
+                const visited = nodeIFStates.get(nodeID);
+                if(visited !== undefined)
+                    visited.highlight = NodeHighlights.VISITED;
+            }
+        }
+        useGraphStore.setState({ graphComponents: { ...graphComponents, nodes: nodeIFStates } });
+        console.log("Graph state: ", graphComponents.nodes);   
+        setLastEventTime(0);
+    });
 
     /**
      * Drag and drop state
@@ -876,6 +906,7 @@ const Canvas = () => {
                 cx={nodeIF.cx} 
                 cy={nodeIF.cy} 
                 onMouseDown={(e) => handleOnMouseDownNode(e, nodeID)}
+                highlight={nodeIF.highlight}
                 />
             );
         }

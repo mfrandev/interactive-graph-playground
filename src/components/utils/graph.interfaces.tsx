@@ -30,3 +30,11 @@ export enum ComponentType {
 export const isEdge = (componentType: ComponentType) => {
     return componentType !== 0;
 }
+
+export interface GraphHighlightState {
+    currentNode: number,
+    visitingNodes: Set<number>,
+    visitedNodes: Set<number>
+};
+
+export const TRAVERSAL_COMPLETE = -2;

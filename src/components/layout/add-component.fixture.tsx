@@ -12,6 +12,7 @@ import '../../index.css';
 import { MouseEventHandler } from 'react';
 
 import { ComponentType, isEdge } from '../utils/graph.interfaces'; 
+import { NodeHighlights } from '../utils/node';
 
 import Node from '../graph/node.fixture';
 import Edge from '../graph/edge.fixture';
@@ -30,7 +31,9 @@ const AddComponentButton = ({ onClickFunction, componentType = ComponentType.BID
                     xmlns="http://www.w3.org/2000/svg"
                     viewBox='0 0 100 100'
                     >
-                        <Node/>
+                        <Node
+                            highlight={NodeHighlights.NONE}
+                        />
                     </svg>
                 </div>
             }

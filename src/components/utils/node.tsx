@@ -10,11 +10,19 @@ import { EdgeID } from './edge';
 
 export type NodeID = number;
 
+export enum NodeHighlights {
+    NONE = "fill-transparent",
+    CURRENT = "fill-green-200",
+    VISITING = "fill-orange-200",
+    VISITED = "fill-gray-200"
+}
+
 export interface NodeIF {
     cx: number, 
     cy: number,
-    gridCells: Set<string>;
-    connectedEdges: Set<EdgeID>
+    gridCells: Set<string>,
+    connectedEdges: Set<EdgeID>,
+    highlight: NodeHighlights,
 }
 
 // Styling for easily adjustable node sizes
