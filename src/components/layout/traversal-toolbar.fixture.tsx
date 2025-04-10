@@ -64,11 +64,11 @@ const TraversalToolbar = () => {
                             clearInterval(interval);
                             setUpdateInterval(null);
                             setIsPaused(true);
-                            updateGraphHighlightState(t);
                             return t;
                         }
                         const nextIndex: number = t + 1;
                         updateGraphHighlightState(nextIndex);
+                        console.log("Traversal index update from " + t + " to " + nextIndex);
                         return nextIndex;
                     });
                 } else {
@@ -87,7 +87,6 @@ const TraversalToolbar = () => {
     };
 
     const display = () => {
-        console.log("clicked");
         adjacencyList = useAdjacencyList.getState();
         traversal = bfs(adjacencyList, 0);
         return traversal?.states.map((state, index) => {return `${index}: ${state}`})

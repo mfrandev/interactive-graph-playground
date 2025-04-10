@@ -21,8 +21,6 @@ import Edge from '../graph/edge.fixture';
 import { EdgeID, EdgeIF } from '../utils/edge';
 import { ComponentType } from '../utils/graph.interfaces';
 
-import { bfs } from '../../algorithms/bfs';
-
 export const CANVASID = 'CanvasSVG';
 export const BACKSPACE = 'Backspace';
 export const DELETE = 'Delete';
@@ -36,31 +34,34 @@ const Canvas = () => {
     let adjacencyList = useAdjacencyList(state => state);
     let collisionManager = useCollisionManager(state => state);
 
+    /**
+     * TODO (Issue #34): This function seems to execute hundreds of times unexpectedly, which is causing the highlight to disappear.
+     * Temporary fix is to eliminate the prevState check, but the root cause needs to be addressed.  
+     */
     useGraphHighlightStateStore.subscribe((state, prevState) => {
         const nodeIFStates = useGraphStore.getState().graphComponents.nodes;
-        console.log(state);
         for(const nodeIF of nodeIFStates.values()) {
             nodeIF.highlight = NodeHighlights.NONE;
         }
-        if(state.currentNode !== prevState.currentNode) {
+        // if(state.currentNode !== prevState.currentNode) {
             const current = nodeIFStates.get(state.currentNode);
             if(current !== undefined)
                 current.highlight = NodeHighlights.CURRENT;
-        }
-        if(state.visitingNodes !== prevState.visitingNodes) {
+        // }
+        // if(state.visitingNodes !== prevState.visitingNodes) {
             for(const nodeID of state.visitingNodes) {
                 const visiting = nodeIFStates.get(nodeID);
                 if(visiting !== undefined)
                     visiting.highlight = NodeHighlights.VISITING;
             }
-        }
-        if(state.visitedNodes !== prevState.visitedNodes) {
+        // }
+        // if(state.visitedNodes !== prevState.visitedNodes) {
             for(const nodeID of state.visitedNodes) {
                 const visited = nodeIFStates.get(nodeID);
                 if(visited !== undefined)
                     visited.highlight = NodeHighlights.VISITED;
             }
-        }
+        // }
         useGraphStore.setState({ graphComponents: { ...graphComponents, nodes: nodeIFStates } });
         console.log("Graph state: ", graphComponents.nodes);   
         setLastEventTime(0);
@@ -212,7 +213,7 @@ const Canvas = () => {
 
         // 2. Update adjacency list state
         if(edgeToDelete.to !== undefined && edgeToDelete.from !== undefined) {
-            console.log("Updating adjacency list after edge delete")
+            // console.log("Updating adjacency list after edge delete");
             const toNodeList = adjacencyList.get(edgeToDelete.to);
             const fromNodeList = adjacencyList.get(edgeToDelete.from);
             if(toNodeList === undefined || fromNodeList === undefined) {
@@ -223,7 +224,7 @@ const Canvas = () => {
                 adjacencyList.set(edgeToDelete.to, toNodeList);
                 adjacencyList.set(edgeToDelete.from, fromNodeList);
             }
-            console.log("updated adj list after delete: ", adjacencyList);
+            // console.log("updated adj list after delete: ", adjacencyList);
         }
         
         // 3. Update connected edges state
@@ -566,7 +567,7 @@ const Canvas = () => {
         setHighlightNode([true, id, ComponentType.NODE]);
         setHighlightNodeCoords([startingCX, startingCY]);
         setHighlightEdge([false, undefined, ComponentType.NONE])
-        console.log(`On mouse down node: ${isHighlightedEdge},${isHighlightedNode}`);
+        // console.log(`On mouse down node: ${isHighlightedEdge},${isHighlightedNode}`);
 
         e.stopPropagation(); // Prevent the parent canvas component from disabling the highlight
 
@@ -676,7 +677,7 @@ const Canvas = () => {
         setHighlightEdge([true, id, type]);
         setHighlightEdgeCoords([startingX1, startingX2, startingY1, startingY2]);
         setHighlightNode([false, undefined, ComponentType.NONE]);
-        console.log(`On mouse down edge: ${isHighlightedEdge},${isHighlightedNode}`);
+        // console.log(`On mouse down edge: ${isHighlightedEdge},${isHighlightedNode}`);
         e.stopPropagation(); // Prevent the parent canvas component from disabling the highlight
     }
 
@@ -982,7 +983,6 @@ const Canvas = () => {
      * This is an inefficient solution, but it gets around the event listener closure problem for now.  
      */
     const deleteComponentHandler = (e: globalThis.KeyboardEvent) => {
-        if(e.key === "b") console.log(bfs(adjacencyList, 0));
         if(e.key !== BACKSPACE && e.key !== DELETE) return; // did not press delete/backspace
         // console.log("Is highlighted edge? ", isHighlightedEdge, " Is highlighted node? ", isHighlightedNode);
         // console.log(`Edge: ${isHighlightedEdge}, ${highlightedEdgeID}, ${highlightTypeEdge} \n Node: ${isHighlightedNode}, ${highlightedNodeID}, ${highlightTypeNode}`);
@@ -1016,7 +1016,7 @@ const Canvas = () => {
 
                 // Disable component highlights. onMouseDown does not propagate up from clicks on components
                 onMouseDown={() =>{
-                    console.log(`Edge: ${isHighlightedEdge}, ${highlightedEdgeID}, ${highlightTypeEdge} \n Node: ${isHighlightedNode}, ${highlightedNodeID}, ${highlightTypeNode}`);
+                    // console.log(`Edge: ${isHighlightedEdge}, ${highlightedEdgeID}, ${highlightTypeEdge} \n Node: ${isHighlightedNode}, ${highlightedNodeID}, ${highlightTypeNode}`);
 
                    setHighlightEdge([false, undefined, ComponentType.NONE]);
                    setHighlightNode([false, undefined, ComponentType.NONE]);
@@ -1033,7 +1033,7 @@ const Canvas = () => {
                     if(isDraggingEdge) handleOnMouseUpEdge(e);
                     if(isRepositionHighlighterX1Y1) handleOnMouseUpX1Y1(e); 
                     if(isRepositionHighlighterX2Y2) handleOnMouseUpX2Y2(e);
-                    console.log("Adjacency List: ", adjacencyList);
+                    // console.log("Adjacency List: ", adjacencyList);
                 }}
 
                 id={`${CANVASID}`}
